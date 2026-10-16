@@ -1,6 +1,6 @@
 # Otimizador de Anúncios Google Ads
 
-App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra onde a verba está sendo desperdiçada, dá nota de 0 a 100 a cada anúncio e (em breve) gera títulos e descrições melhores com IA (Claude).
+App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra onde a verba está sendo desperdiçada, dá nota de 0 a 100 a cada anúncio e gera títulos e descrições melhores com IA (Claude).
 
 > **Status:** em desenvolvimento. Fases 1–5 prontas (base, conexão, painel, nota e diagnóstico, sugestões com IA) + login e suporte à Vercel. Veja [docs/tarefas.md](docs/tarefas.md).
 > **Segurança:** online, o app exige senha (variáveis `APP_SENHA_HASH` e `APP_SESSAO_SEGREDO`). Sem elas, ele se bloqueia sozinho.
@@ -9,6 +9,7 @@ App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra 
 
 - **Painel:** custo, cliques, CTR, CPC, conversões; palavras-chave que gastam sem converter; anúncios com CTR abaixo da média do grupo.
 - **Anúncios:** nota 0–100 por regras explicadas (limite de caracteres, palavra-chave no título, chamada para ação, títulos repetidos, quantidade de variações, força do anúncio) com "como corrigir".
+- **Sugestões com IA:** até 15 títulos e 4 descrições novos por anúncio, sempre dentro de 30/90 caracteres, com histórico e custo estimado.
 - **Nada é alterado no Google Ads** — o app só lê e sugere.
 
 ## Como rodar
