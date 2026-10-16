@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Tokens do docs/design.md: use sempre estes nomes (bg-primaria, text-erro…), nunca hex solto. */
+@theme {
+  --color-primaria: #6c5ce7;
+  --color-primaria-escura: #5a4bd1;
+  --color-primaria-clara: #edebfc;
+  --color-apoio: #00b894;
+  --color-aviso: #fdcb6e;
+  --color-erro: #e84362;
+  --color-fundo: #f5f6fa;
+  --color-superficie: #ffffff;
+  --color-texto: #2d3436;
+  --color-texto-suave: #636e72;
+  --color-borda: #dfe6e9;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --radius-card: 12px;
+}
+
+@layer base {
+  body {
+    @apply bg-fundo text-texto font-medium text-[15px] leading-[22px];
+  }
+  h1 {
+    @apply text-[28px] leading-9 font-extrabold;
+  }
+  h2 {
+    @apply text-xl leading-7 font-extrabold;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primaria;
+  }
+}
+
+@utility numero {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}

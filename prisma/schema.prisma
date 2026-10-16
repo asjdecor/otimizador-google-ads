@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Conexão OAuth com o Google. O refresh token é sempre criptografado (AES-256-GCM).
+model ConexaoGoogle {
+  id                        String     @id @default(cuid())
+  email                     String     @unique
+  refreshTokenCriptografado String
+  criadoEm                  DateTime   @default(now())
+  contas                    ContaAds[]
+}
+
+/// Conta de anúncios acessível pela conexão (inclui filhas de uma MCC).
+model ContaAds {
+  id         String        @id @default(cuid())
+  customerId String        @unique
+  nome       String
+  moeda      String
+  ehGerente  Boolean       @default(false)
+  selecionada Boolean      @default(false)
+  /// MCC pela qual a conta é acessada (vai como login-customer-id nas consultas). Null = acesso direto.
+  loginCustomerId String?
+  conexaoId  String
+  conexao    ConexaoGoogle @relation(fields: [conexaoId], references: [id], onDelete: Cascade)
+}
+
+/// Cache de consultas GAQL (TTL de 15 min). Chave = conta + consulta + período.
+model CacheConsulta {
+  chave    String   @id
+  json     String
+  expiraEm DateTime
+}
+
+/// Sugestões geradas pela IA. tipo: TITULOS_DESCRICOES | NEGATIVAS | NOVAS_PALAVRAS
+model Sugestao {
+  id              String   @id @default(cuid())
+  customerId      String
+  anuncioId       String?
+  tipo            String
+  contextoUsuario String?
+  resultadoJson   String
+  modelo          String
+  tokensEntrada   Int
+  tokensSaida     Int
+  criadoEm        DateTime @default(now())
+
+  @@index([customerId, anuncioId])
+}
+
+/// Configuração única do app (linha id = 1).
+model Configuracao {
+  id                Int @id @default(1)
+  limiteDesperdicio Int @default(50)
+  periodoPadrao     Int @default(30)
+}
