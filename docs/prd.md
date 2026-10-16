@@ -54,6 +54,13 @@ Regra do MVP: o app **só lê** dados da conta e **sugere** mudanças. Nenhuma a
 - F5.3 O usuário consegue ver **sugestões de novas palavras-chave**: termos de pesquisa que converteram e ainda não são palavras-chave, mais variações sugeridas pela IA, cada uma com o tipo de correspondência sugerido.
 - F5.4 O usuário consegue exportar as listas de negativas e de novas palavras-chave em CSV.
 
+## 4.1 Publicação online (pedido do usuário em 2026-10-15)
+O usuário quer o app acessível num endereço web com domínio próprio. Condições obrigatórias **antes** de publicar:
+- P1. O usuário consegue entrar no app só com a sua senha. Sem login, nenhuma tela ou rota mostra dados (todas respondem 401 ou levam ao login).
+- P2. Os dados ficam num banco online (PostgreSQL), não num arquivo local.
+- P3. O login do Google volta para o domínio publicado (redirect OAuth atualizado).
+- P4. As chaves ficam só nas variáveis de ambiente da hospedagem, nunca no repositório (que é público).
+
 ## 5. Desejáveis (fase 2, fora do MVP)
 - Aplicar sugestões direto na conta pela API: criar anúncio, adicionar negativas, pausar palavra-chave, sempre com confirmação.
 - Testes A/B acompanhados (sugestão aplicada vs. original, comparação de CTR depois de N dias).

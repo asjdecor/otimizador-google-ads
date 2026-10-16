@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { claudeEstaConfigurado } from "@/api/configuracao/ambiente";
 import { carregarContextoDaConta } from "@/api/http/contexto-da-conta";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { carregarAnuncioAvaliado, idDoAnuncioEhValido, type AnuncioAvaliado } from "@/api/servicos/anuncios";
 import { contarCaracteresVisiveis, LIMITE_DESCRICAO, LIMITE_TITULO } from "@/api/servicos/diagnostico";
 import { formatarData, formatarMoeda, formatarNumero, formatarPercentual } from "@/api/servicos/formatacao";
 import type { IntervaloDeDatas } from "@/api/servicos/periodo";
+import { listarSugestoesDoAnuncio } from "@/api/servicos/sugestoes";
 import { Aviso } from "@/componentes/Aviso";
 import { AvisoSemConta } from "@/componentes/AvisoSemConta";
 import { CardMetrica } from "@/componentes/CardMetrica";
 import { ItemDiagnostico } from "@/componentes/ItemDiagnostico";
+import { PainelDeSugestoes } from "@/componentes/PainelDeSugestoes";
 import { SeloNota } from "@/componentes/SeloNota";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +92,7 @@ export default async function PaginaDoAnuncio({ params }: { params: Promise<{ id
   }
 
   const { anuncio, diagnostico, metricas } = avaliado;
+  const historico = await listarSugestoesDoAnuncio(contexto.conta.customerId, avaliado.id);
   const moeda = contexto.conta.moeda || "BRL";
   const problemas = diagnostico.itens.filter((i) => i.situacao !== "ok").length;
 
@@ -143,13 +147,10 @@ export default async function PaginaDoAnuncio({ params }: { params: Promise<{ id
         <ListaDeTextos titulo="Descrições" textos={anuncio.descricoes} limite={LIMITE_DESCRICAO} />
       </div>
 
-      <div className="flex flex-col gap-2 rounded-card border border-dashed border-borda p-4 text-texto-suave">
-        <strong className="text-texto">Gerar sugestões com IA</strong>
-        Na Fase 5 este anúncio ganha um botão para o Claude escrever novos títulos e descrições.
-        {avaliado.palavrasDoGrupo.length > 0 && (
-          <span className="text-[13px]">Palavras-chave do grupo: {avaliado.palavrasDoGrupo.join(", ")}</span>
-        )}
-      </div>
+      {avaliado.palavrasDoGrupo.length > 0 && (
+        <p className="text-[13px] text-texto-suave">Palavras-chave do grupo: {avaliado.palavrasDoGrupo.join(", ")}</p>
+      )}
+      <PainelDeSugestoes anuncioId={avaliado.id} historicoInicial={historico} iaConfigurada={claudeEstaConfigurado()} />
     </section>
   );
 }

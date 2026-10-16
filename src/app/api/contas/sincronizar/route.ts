@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { lerConfiguracaoGoogle } from "@/api/configuracao/ambiente";
-import { barrarOutraOrigem, responderErroDoGoogle } from "@/api/http/respostas";
+import { barrarOutraOrigem, responderErroExterno } from "@/api/http/respostas";
 import { criarApiGoogleAds } from "@/api/integracoes/google-ads/api-google-ads";
 import { atualizarContasDoGoogle } from "@/api/servicos/conexao";
 
@@ -13,6 +13,6 @@ export async function POST(requisicao: Request) {
     await atualizarContasDoGoogle(criarApiGoogleAds(lerConfiguracaoGoogle()));
     return NextResponse.json({ ok: true });
   } catch (erro) {
-    return responderErroDoGoogle(erro);
+    return responderErroExterno(erro);
   }
 }

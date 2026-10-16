@@ -3,7 +3,7 @@
 > Dono: agente `planejador`
 
 **Atualizado:** 2026-10-15
-**Fase atual:** Fases 2, 3 e 4 com código pronto (faltam os testes manuais com a conta real). A próxima é a Fase 5 (Reescrita com IA).
+**Fase atual:** Fases 2 a 5 com código pronto (faltam os testes manuais com a conta real). A próxima é a Fase 6 (Palavras-chave). A Fase 8 (publicação online) espera a decisão do usuário sobre hospedagem e domínio.
 
 ## Já feito
 - ✔ Os 6 docs. Mudanças aprovadas: SQLite no lugar de PostgreSQL/Docker e Node 24.
@@ -29,7 +29,13 @@
   - `servicos/anuncios.ts`: lista com nota + métricas (reaproveita o cache de métricas de anúncios do painel). O id na URL é `grupo~anuncio`.
   - `http/contexto-da-conta.ts`: carrega conta, período, configuração e API para todas as telas de dados (painel e anúncios usam).
   - Telas: `/anuncios` (tabela da pior para a melhor nota, com link) e `/anuncios/[id]` (SeloNota, métricas, diagnóstico com "como corrigir" e pontos perdidos, títulos e descrições com contador). No painel, os anúncios com CTR baixo agora têm link.
-- ✔ 167 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
+- ✔ **Fase 5, Reescrita com IA:**
+  - `integracoes/claude/cliente.ts`: `client.beta.messages.parse` + `betaZodOutputFormat` (`@anthropic-ai/sdk/helpers/beta/zod`), `effort: "medium"`, `fallbacks: "default"` com beta `server-side-fallback-2026-07-01`. O modelo padrão é **`claude-opus-5-5`** (`CLAUDE_MODEL` troca). `interpretarRespostaDoClaude` (recusa, corte, formato inválido) e `traduzirErroDoClaude` usam as classes de erro do SDK. `estimarCustoEmDolares` tem a tabela de preços.
+  - `servicos/sugestoes.ts`: o prompt marca o anúncio, as palavras e o contexto como dados e proíbe inventar preço, prazo ou garantia; segue as políticas do Google (sem "!" em títulos). `filtrarTextosValidos` descarta textos acima de 30/90, repetidos e os que já existem. Até 3 chamadas, pedindo complemento citando o que estourou. Limita a 15 títulos e 4 descrições. Histórico na tabela `Sugestao` (tipo TITULOS_DESCRICOES).
+  - Rota `POST /api/sugestoes` + PainelDeSugestoes (contexto opcional de 500 caracteres, AvisoRevisao, ItemSugestao com contador e copiar, "Copiar todos", custo estimado, gerações anteriores).
+  - Teste do critério do PRD: 30 rodadas de respostas aleatórias, nenhuma sugestão acima do limite.
+- ✔ **Repositório público:** https://github.com/asjdecor/otimizador-google-ads (e-mail noreply nos commits; `.env` e banco fora do git, conferido no GitHub).
+- ✔ 200 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
 
 ## Notas técnicas
 - npm 11: install scripts aprovados em `allowScripts`. Pacote novo com script: `npm approve-scripts <pacote>`.
@@ -39,7 +45,8 @@
 - Os subagentes estão bloqueados pelo plugin vaara-governance. O assistente principal faz os papéis da equipe. O mesmo plugin bloqueia `curl -X POST`, mesmo para localhost; teste os POSTs por testes automatizados.
 - Para ler uma conta filha de MCC, use sempre `loginCustomerId` da `ContaAds` nas consultas (`ApiGoogleAds.consultar`).
 - `GOOGLE_ADS_LOGIN_CUSTOMER_ID` do `.env` não é usado: cada `ContaAds` guarda seu próprio `loginCustomerId`, descoberto na listagem.
-- A página `/anuncios/[id]` tem um bloco reservado para "Gerar sugestões com IA" (Fase 5): trocar o placeholder pelo formulário real.
+- Testes de componente: o React 19 nem sempre insere `<!-- -->` entre textos vizinhos; use regex com o marcador opcional.
+- Publicação online (PRD § 4.1, Fase 8): **não publicar sem o login do app**. SQLite não roda na Vercel; é preciso Postgres (ex.: Neon).
 
 ## Parou em
-Fase 5, primeira tarefa: integração Claude em `src/api/integracoes/claude/`, com cliente `@anthropic-ai/sdk`, modelo de `CLAUDE_MODEL` e saída JSON validada por Zod (`{ titulos: string[], descricoes: string[] }`). Mock nos testes. Depois, `gerarSugestoesDeTitulos`: prompt com o texto atual, as palavras do grupo, a URL e o contexto do usuário; descartar textos > 30/90 com `contarCaracteresVisiveis` (de `diagnostico.ts`) e tentar até 2 vezes de novo. Antes de codar, conferir com a skill `claude-api` a forma atual de saída estruturada do SDK. **Em paralelo, o usuário** preenche o `.env` (inclusive `ANTHROPIC_API_KEY`) e testa as Fases 2 a 4 na conta real.
+Fase 6, primeira tarefa: consulta GAQL de termos de pesquisa (`search_term_view`: `search_term_view.search_term`, `search_term_view.status`, `ad_group.id/name`, `campaign.name` + métricas, com período) + tela `/palavras-chave` com TabelaDados. Depois: negativas (regra custo sem conversão + classificação de irrelevância pela IA com motivo, via `GeradorDeTexto`), novas palavras (termos que converteram e não são palavras-chave + variações da IA com correspondência) e exportação CSV. **Pendências do usuário:** preencher o `.env` e testar as Fases 2 a 5; decidir a hospedagem e o domínio da Fase 8.

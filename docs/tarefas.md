@@ -47,10 +47,11 @@
 ## Fase 5 — Reescrita com IA (F4)
 | Tarefa | Prioridade | Status |
 |---|---|---|
-| Integração Claude: cliente + saída JSON validada por Zod (mock nos testes) | Alta | Pendente |
-| Serviço `gerarSugestoesDeTitulos`: prompt, filtro de limite (30/90) e até 2 novas tentativas + teste "nenhuma sugestão acima do limite" | Alta | Pendente |
-| Tela: campo de contexto, BotaoConfirmar, ItemSugestao com contador, copiar um/todos, AvisoRevisao | Alta | Pendente |
-| Salvar sugestões no banco + histórico por anúncio + tokens usados | Média | Pendente |
+| Integração Claude: cliente + saída JSON validada por Zod (mock nos testes) | Alta | Feita |
+| Serviço `gerarSugestoesDeTitulos`: prompt, filtro de limite (30/90) e até 2 novas tentativas + teste "nenhuma sugestão acima do limite" | Alta | Feita |
+| Tela: campo de contexto, BotaoConfirmar, ItemSugestao com contador, copiar um/todos, AvisoRevisao | Alta | Feita |
+| Salvar sugestões no banco + histórico por anúncio + tokens usados | Média | Feita |
+| Teste manual: gerar sugestões num anúncio real e conferir qualidade e custo (precisa de ANTHROPIC_API_KEY) | Alta | Pendente |
 
 ## Fase 6 — Palavras-chave (F5)
 | Tarefa | Prioridade | Status |
@@ -66,3 +67,13 @@
 | Teste e2e (Playwright) com Google Ads e Claude falsos: conectar → painel → anúncio → gerar sugestões | Média | Pendente |
 | Conferir métricas com a interface do Google Ads (critério ≤ 1%) numa conta real | Alta | Pendente |
 | README de como rodar | Baixa | Pendente |
+
+## Fase 8 — Publicação online (PRD § 4.1)
+| Tarefa | Prioridade | Status |
+|---|---|---|
+| Repositório público no GitHub (github.com/asjdecor/otimizador-google-ads), sem segredos | Alta | Feita |
+| **Usuário:** escolher hospedagem (recomendado: Vercel + Neon Postgres gratuito) e informar o domínio | Alta | Pendente |
+| Login do app: senha única do dono (hash no `.env`), sessão em cookie httpOnly assinado, middleware protegendo todas as telas e rotas | Alta | Pendente |
+| Trocar SQLite → PostgreSQL (provider + migrations recriadas; testes com Postgres ou SQLite separado) | Alta | Pendente |
+| Configurar variáveis na hospedagem + redirect OAuth `https://<domínio>/api/auth/google/callback` no Google Cloud | Alta | Pendente |
+| Apontar o domínio (DNS) para a hospedagem e testar ponta a ponta | Média | Pendente |

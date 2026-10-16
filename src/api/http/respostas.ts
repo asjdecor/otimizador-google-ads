@@ -7,8 +7,8 @@ export function responderErro(mensagem: string, status = 400): NextResponse {
 }
 
 /** Erro inesperado: frase útil para o usuário; detalhe só no log do servidor (sem tokens). */
-export function responderErroDoGoogle(erro: unknown): NextResponse {
-  console.error("[google-ads]", erro instanceof Error ? erro.message : erro);
+export function responderErroExterno(erro: unknown): NextResponse {
+  console.error("[servico-externo]", erro instanceof Error ? erro.message : erro);
   return responderErro(traduzirErroGoogleAds(erro), 502);
 }
 

@@ -1,6 +1,7 @@
 # Arquitetura — Otimizador de Anúncios Google Ads
 
 > Dono: agente `arquiteto` · Atualizado: 2026-10-15 · Base: `docs/prd.md`
+> Mudança 2026-10-15: modelo de IA padrão `claude-sonnet-5-5` → `claude-opus-5-5` (troca de modelo por custo é decisão do usuário).
 > Mudança 2026-10-15 (aprovada pelo usuário): PostgreSQL/Docker → **SQLite** (Docker não instalado; app de usuário único). Node 22 → **Node 24** (versão instalada).
 
 ## 1. Camadas
@@ -42,7 +43,7 @@ Regras de arquitetura:
 | Banco | SQLite + Prisma 6 (migrations) | Usuário único: banco em arquivo, zero instalação. Migrations versionadas; trocar para PostgreSQL depois só exige mudar o `provider`. |
 | Google Ads | Google Ads API (REST/GAQL), via biblioteca `google-ads-api` | Leitura de campanhas, anúncios, palavras-chave e termos de pesquisa. |
 | OAuth | `google-auth-library` | Login e refresh token. |
-| IA | `@anthropic-ai/sdk`, modelo `claude-sonnet-5-5` (configurável por `CLAUDE_MODEL`) | Bom equilíbrio entre qualidade de texto publicitário e custo. |
+| IA | `@anthropic-ai/sdk`, modelo padrão `claude-opus-5-5` (configurável por `CLAUDE_MODEL`; `claude-sonnet-5-5` custa metade) | Modelo recomendado atual. Saída estruturada com Zod (`beta.messages.parse` + `betaZodOutputFormat`), `effort: medium` e `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`) para recusas falsas dos filtros de segurança. |
 | Testes | Vitest (unidade/integração) + Playwright (1 fluxo e2e) | Rápidos e com suporte a TypeScript. |
 | Deploy | Local: `npm run build && npm start` em localhost | Uso pessoal; nada exposto na internet no MVP. Docker fica opcional para depois. |
 

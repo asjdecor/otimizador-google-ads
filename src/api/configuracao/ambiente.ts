@@ -36,3 +36,24 @@ export function lerConfiguracaoGoogle(ambiente: Ambiente = process.env): Configu
     developerToken: (ambiente.GOOGLE_ADS_DEVELOPER_TOKEN ?? "").trim(),
   };
 }
+
+export interface ConfiguracaoClaude {
+  apiKey: string;
+  modelo: string;
+}
+
+export const MODELO_CLAUDE_PADRAO = "claude-opus-5-5";
+
+/** Diz se a chave da Anthropic está preenchida (para a tela avisar antes de tentar gerar). */
+export function claudeEstaConfigurado(ambiente: Ambiente = process.env): boolean {
+  return Boolean(ambiente.ANTHROPIC_API_KEY?.trim());
+}
+
+/** Lê a chave da Anthropic e o modelo do .env (modelo vazio usa o padrão). */
+export function lerConfiguracaoClaude(ambiente: Ambiente = process.env): ConfiguracaoClaude {
+  const apiKey = ambiente.ANTHROPIC_API_KEY?.trim();
+  if (!apiKey) {
+    throw new ErroDeConfiguracao("Preencha no arquivo .env: ANTHROPIC_API_KEY (console.anthropic.com → API Keys).");
+  }
+  return { apiKey, modelo: ambiente.CLAUDE_MODEL?.trim() || MODELO_CLAUDE_PADRAO };
+}
