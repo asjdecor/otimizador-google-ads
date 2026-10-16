@@ -72,8 +72,10 @@
 | Tarefa | Prioridade | Status |
 |---|---|---|
 | Repositório público no GitHub (github.com/asjdecor/otimizador-google-ads), sem segredos | Alta | Feita |
-| **Usuário:** escolher hospedagem (recomendado: Vercel + Neon Postgres gratuito) e informar o domínio | Alta | Pendente |
-| Login do app: senha única do dono (hash no `.env`), sessão em cookie httpOnly assinado, middleware protegendo todas as telas e rotas | Alta | Pendente |
-| Trocar SQLite → PostgreSQL (provider + migrations recriadas; testes com Postgres ou SQLite separado) | Alta | Pendente |
+| **Usuário:** escolher hospedagem → **Vercel** (escolhido em 2026-10-15) | Alta | Feita |
+| **Usuário:** criar conta na Vercel, importar o repositório, adicionar Neon e as variáveis (passo a passo no README) | Alta | Pendente |
+| **Usuário:** informar o domínio (ou usar o endereço `.vercel.app` por enquanto) | Média | Pendente |
+| Login do app: senha única do dono (hash no `.env`), sessão em cookie httpOnly assinado, middleware protegendo todas as telas e rotas | Alta | Feita |
+| PostgreSQL na Vercel: schema gerado + migration `0_inicial` + script `vercel-build` (local/testes seguem em SQLite) | Alta | Feita |
 | Configurar variáveis na hospedagem + redirect OAuth `https://<domínio>/api/auth/google/callback` no Google Cloud | Alta | Pendente |
 | Apontar o domínio (DNS) para a hospedagem e testar ponta a ponta | Média | Pendente |

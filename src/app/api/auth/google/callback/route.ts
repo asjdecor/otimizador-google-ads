@@ -7,6 +7,9 @@ import { criarProvedorOAuthGoogle } from "@/api/integracoes/google-ads/oauth";
 import { COOKIE_ESTADO_OAUTH, estadoOAuthConfere } from "@/api/seguranca/requisicao";
 import { concluirConexaoGoogle } from "@/api/servicos/conexao";
 
+/** Vercel: chamadas ao Google/IA podem levar dezenas de segundos. */
+export const maxDuration = 60;
+
 /** Volta do Google: confere o estado, salva o token e busca as contas. */
 export async function GET(requisicao: NextRequest) {
   const parametros = requisicao.nextUrl.searchParams;

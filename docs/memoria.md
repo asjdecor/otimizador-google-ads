@@ -3,7 +3,7 @@
 > Dono: agente `planejador`
 
 **Atualizado:** 2026-10-15
-**Fase atual:** Fases 2 a 5 com código pronto (faltam os testes manuais com a conta real). A próxima é a Fase 6 (Palavras-chave). A Fase 8 (publicação online) espera a decisão do usuário sobre hospedagem e domínio.
+**Fase atual:** Fases 2 a 5 com código pronto (faltam os testes manuais com a conta real). A próxima é a Fase 6 (Palavras-chave). Fase 8: código de publicação pronto (login + Postgres). Falta o usuário criar o projeto na Vercel e informar o domínio.
 
 ## Já feito
 - ✔ Os 6 docs. Mudanças aprovadas: SQLite no lugar de PostgreSQL/Docker e Node 24.
@@ -35,7 +35,12 @@
   - Rota `POST /api/sugestoes` + PainelDeSugestoes (contexto opcional de 500 caracteres, AvisoRevisao, ItemSugestao com contador e copiar, "Copiar todos", custo estimado, gerações anteriores).
   - Teste do critério do PRD: 30 rodadas de respostas aleatórias, nenhuma sugestão acima do limite.
 - ✔ **Repositório público:** https://github.com/asjdecor/otimizador-google-ads (e-mail noreply nos commits; `.env` e banco fora do git, conferido no GitHub).
-- ✔ 200 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
+- ✔ **Fase 8, preparação para a Vercel:**
+  - Login: `src/api/seguranca/sessao.ts` (Web Crypto, funciona no Edge) + `senha.ts` (scrypt, formato `scrypt:salt:hash`, sem `$` porque o Next expande o `.env`) + `src/middleware.ts`. Tela `/login`, rotas `/api/auth/entrar` e `/api/auth/sair`, BotaoSair. Script `npm run gerar-senha -- "senha"`.
+  - As telas foram para o grupo `src/app/(app)/`. O layout raiz é só a casca, para o login não carregar dados da conta.
+  - Postgres: `scripts/gerar-schema-postgres.mjs` → `prisma/postgres/schema.prisma` + `migrations/0_inicial`. `vercel-build` verifica, gera, roda o `migrate deploy` e o build. `maxDuration = 60` nas rotas lentas.
+  - Teste de fumaça em produção: redireciona para o login, 401 na API, cookie forjado recusado, 503 sem senha.
+- ✔ 231 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
 
 ## Notas técnicas
 - npm 11: install scripts aprovados em `allowScripts`. Pacote novo com script: `npm approve-scripts <pacote>`.
@@ -49,4 +54,4 @@
 - Publicação online (PRD § 4.1, Fase 8): **não publicar sem o login do app**. SQLite não roda na Vercel; é preciso Postgres (ex.: Neon).
 
 ## Parou em
-Fase 6, primeira tarefa: consulta GAQL de termos de pesquisa (`search_term_view`: `search_term_view.search_term`, `search_term_view.status`, `ad_group.id/name`, `campaign.name` + métricas, com período) + tela `/palavras-chave` com TabelaDados. Depois: negativas (regra custo sem conversão + classificação de irrelevância pela IA com motivo, via `GeradorDeTexto`), novas palavras (termos que converteram e não são palavras-chave + variações da IA com correspondência) e exportação CSV. **Pendências do usuário:** preencher o `.env` e testar as Fases 2 a 5; decidir a hospedagem e o domínio da Fase 8.
+Esperando o usuário publicar na Vercel (passo a passo no README, seção "Publicar na Vercel") e informar o domínio. Ao receber o endereço: conferir que `GOOGLE_REDIRECT_URI` usa `https://<domínio>/api/auth/google/callback` e que o mesmo endereço está no Google Cloud. Se houver erro de build, pedir o log da Vercel. Depois, seguir para a Fase 6 (Palavras-chave), começando pela consulta `search_term_view`.

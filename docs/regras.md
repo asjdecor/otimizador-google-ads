@@ -22,6 +22,8 @@
 - **Não** chamar mutações da API do Google Ads no MVP (o app é somente leitura).
 - **Não** alterar `prd.md`, `arquitetura.md` ou `design.md` sem aprovação do agente dono.
 - **Não** commitar `.env`, tokens ou chaves.
+- **Banco:** edite só `prisma/schema.prisma` (SQLite). Toda mudança de modelo exige: `npm run db:migrate` (SQLite), `npm run db:schema-postgres` e uma migration nova em `prisma/postgres/migrations/` (`prisma migrate diff --from-schema-datamodel <anterior> --to-schema-datamodel prisma/postgres/schema.prisma --script`). O teste `schema-postgres` (e o `vercel-build`) falha se o schema Postgres não for regenerado; a migration Postgres **não** é checada automaticamente, então não esqueça dela.
+- **Login:** toda tela nova vai dentro de `src/app/(app)/`. Nada fora desse grupo pode ler dados da conta, exceto `/login`, que é público.
 
 ## 3. Estrutura
 - Telas em `src/app/`, regras em `src/api/`, componentes em `src/componentes/`, testes em `testes/`. **Nada solto na raiz** além de arquivos de configuração.

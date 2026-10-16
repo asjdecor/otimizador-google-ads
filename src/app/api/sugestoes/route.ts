@@ -6,6 +6,9 @@ import { barrarOutraOrigem, responderErro, responderErroExterno } from "@/api/ht
 import { criarGeradorClaude } from "@/api/integracoes/claude/cliente";
 import { gerarESalvarSugestoesDoAnuncio, TAMANHO_MAXIMO_DO_CONTEXTO } from "@/api/servicos/sugestoes";
 
+/** Vercel: chamadas ao Google/IA podem levar dezenas de segundos. */
+export const maxDuration = 60;
+
 const esquemaCorpo = z.object({
   anuncioId: z.string().regex(/^\d+~\d+$/),
   contexto: z.string().max(TAMANHO_MAXIMO_DO_CONTEXTO).optional(),

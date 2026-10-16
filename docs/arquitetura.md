@@ -45,7 +45,9 @@ Regras de arquitetura:
 | OAuth | `google-auth-library` | Login e refresh token. |
 | IA | `@anthropic-ai/sdk`, modelo padrão `claude-opus-5-5` (configurável por `CLAUDE_MODEL`; `claude-sonnet-5-5` custa metade) | Modelo recomendado atual. Saída estruturada com Zod (`beta.messages.parse` + `betaZodOutputFormat`), `effort: medium` e `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`) para recusas falsas dos filtros de segurança. |
 | Testes | Vitest (unidade/integração) + Playwright (1 fluxo e2e) | Rápidos e com suporte a TypeScript. |
-| Deploy | Local: `npm run build && npm start` em localhost | Uso pessoal; nada exposto na internet no MVP. Docker fica opcional para depois. |
+| Deploy | **Vercel** (importando o repositório do GitHub; script `vercel-build`). Local: `npm run dev` | Pedido do usuário (PRD § 4.1). Sem CLI: a Vercel publica a cada push na `main`. |
+| Banco em produção | **PostgreSQL (Neon, integração da Vercel)**. Schema gerado de `prisma/schema.prisma` por `scripts/gerar-schema-postgres.mjs` → `prisma/postgres/` (migrations próprias) | SQLite não funciona na Vercel. Local e testes seguem em SQLite (nada para instalar); teste garante que os dois schemas têm os mesmos modelos. |
+| Login | Senha única (hash scrypt em `APP_SENHA_HASH`), sessão em cookie httpOnly assinado com HMAC (`APP_SESSAO_SEGREDO` + hash da senha), `src/middleware.ts` protege tudo | Na Vercel/produção, sem senha o app bloqueia tudo (503). No PC, sem senha o login fica desligado. |
 
 Variáveis de ambiente (`.env`, nunca commitado; `.env.example` versionado):
 `DATABASE_URL`, `ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_LOGIN_CUSTOMER_ID` (opcional, MCC), `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
@@ -62,9 +64,14 @@ Variáveis de ambiente (`.env`, nunca commitado; `.env.example` versionado):
 ```
 equipe-dev-ia/
 ├─ docs/                      prd, arquitetura, regras, design, tarefas, memoria
+├─ scripts/                  gerar-senha.mjs, gerar-schema-postgres.mjs
 ├─ src/
+│  ├─ middleware.ts           porteiro do login (todas as rotas)
 │  ├─ app/                    TELAS (Next.js App Router)
-│  │  ├─ page.tsx             painel (métricas + desperdício)
+│  │  ├─ layout.tsx           só a casca HTML (o login usa este)
+│  │  ├─ login/               tela pública de login
+│  │  ├─ (app)/layout.tsx     menu + topo com dados da conta (só telas protegidas)
+│  │  ├─ (app)/page.tsx       painel (métricas + desperdício)
 │  │  ├─ conectar/            tela de conexão OAuth
 │  │  ├─ anuncios/[id]/       nota + diagnóstico + reescrita IA
 │  │  ├─ palavras-chave/      termos de pesquisa, negativas, novas
