@@ -56,10 +56,11 @@
 ## Fase 6 — Palavras-chave (F5)
 | Tarefa | Prioridade | Status |
 |---|---|---|
-| Consulta GAQL de termos de pesquisa + tela com TabelaDados | Alta | Pendente |
-| Serviço de negativas: regra (custo sem conversão) + classificação de irrelevância pela IA, com motivo | Alta | Pendente |
-| Serviço de novas palavras: termos que converteram e não são palavras-chave + variações da IA com tipo de correspondência | Média | Pendente |
-| Exportar negativas e novas palavras em CSV | Média | Pendente |
+| Consulta GAQL de termos de pesquisa + tela com TabelaDados | Alta | Feita |
+| Serviço de negativas: regra (custo sem conversão) + classificação de irrelevância pela IA, com motivo | Alta | Feita |
+| Serviço de novas palavras: termos que converteram e não são palavras-chave + variações da IA com tipo de correspondência | Média | Feita |
+| Exportar negativas e novas palavras em CSV | Média | Feita |
+| Teste manual: conferir termos, rodar a análise com IA e importar um CSV no Google Ads Editor | Alta | Pendente |
 
 ## Fase 7 — Fechamento do MVP
 | Tarefa | Prioridade | Status |

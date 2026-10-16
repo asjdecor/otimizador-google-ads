@@ -37,7 +37,7 @@ model CacheConsulta {
   expiraEm DateTime
 }
 
-/// Sugestões geradas pela IA. tipo: TITULOS_DESCRICOES | NEGATIVAS | NOVAS_PALAVRAS
+/// Sugestões geradas pela IA. tipo: TITULOS_DESCRICOES (por anúncio) | ANALISE_TERMOS (negativas + novas palavras da conta)
 model Sugestao {
   id              String   @id @default(cuid())
   customerId      String

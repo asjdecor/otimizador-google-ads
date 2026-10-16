@@ -3,7 +3,7 @@
 > Dono: agente `planejador`
 
 **Atualizado:** 2026-10-15
-**Fase atual:** Fases 2 a 5 com código pronto (faltam os testes manuais com a conta real). A próxima é a Fase 6 (Palavras-chave). Fase 8: código de publicação pronto (login + Postgres). Falta o usuário criar o projeto na Vercel e informar o domínio.
+**Fase atual:** Fases 1 a 6 com código pronto (o MVP do PRD está todo implementado). Faltam: testes manuais na conta real, Fase 7 (teste e2e, conferir métricas) e publicar na Vercel (ações do usuário).
 
 ## Já feito
 - ✔ Os 6 docs. Mudanças aprovadas: SQLite no lugar de PostgreSQL/Docker e Node 24.
@@ -35,12 +35,19 @@
   - Rota `POST /api/sugestoes` + PainelDeSugestoes (contexto opcional de 500 caracteres, AvisoRevisao, ItemSugestao com contador e copiar, "Copiar todos", custo estimado, gerações anteriores).
   - Teste do critério do PRD: 30 rodadas de respostas aleatórias, nenhuma sugestão acima do limite.
 - ✔ **Repositório público:** https://github.com/asjdecor/otimizador-google-ads (e-mail noreply nos commits; `.env` e banco fora do git, conferido no GitHub).
+- ✔ **Fase 6, Palavras-chave:**
+  - `integracoes/google-ads/termos.ts`: `search_term_view` com período; status 2 ADICIONADO, 3 EXCLUIDO, 4 ADICIONADO_E_EXCLUIDO, 5 NENHUMA.
+  - `servicos/termos.ts` (puro): negativas por regra (gastou, 0 conversão, situação NENHUMA, Exata, até 100); palavras novas por regra (converteu, não é palavra do grupo; 2+ conversões Exata, 1 Frase).
+  - `servicos/csv.ts`: formato do Google Ads Editor (Campaign, Ad group, Keyword, Criterion Type), BOM, **proteção contra injeção de fórmula** (termos vêm de qualquer pessoa).
+  - `servicos/analise-de-termos.ts`: uma chamada ao Claude devolve negativas e variações. Os termos são tratados como não confiáveis no prompt. **Negativa só é aceita se o termo existir** (sem conversão, não excluído). Variações respeitam 80 caracteres e 10 palavras, não repetem existentes, e o grupo vem do `termo_de_origem`. Salva como `Sugestao` tipo `ANALISE_TERMOS`; o esquema puro em `esquema-analise-de-termos.ts` também é usado no navegador.
+  - Tela `/palavras-chave`: resumo, negativas, palavras novas, painel de IA (contexto "o que vende e o que não vende") e todos os termos; botões de exportar CSV (gerado no navegador).
+  - `EmBreve` removido (não tinha mais uso).
 - ✔ **Fase 8, preparação para a Vercel:**
   - Login: `src/api/seguranca/sessao.ts` (Web Crypto, funciona no Edge) + `senha.ts` (scrypt, formato `scrypt:salt:hash`, sem `$` porque o Next expande o `.env`) + `src/middleware.ts`. Tela `/login`, rotas `/api/auth/entrar` e `/api/auth/sair`, BotaoSair. Script `npm run gerar-senha -- "senha"`.
   - As telas foram para o grupo `src/app/(app)/`. O layout raiz é só a casca, para o login não carregar dados da conta.
   - Postgres: `scripts/gerar-schema-postgres.mjs` → `prisma/postgres/schema.prisma` + `migrations/0_inicial`. `vercel-build` verifica, gera, roda o `migrate deploy` e o build. `maxDuration = 60` nas rotas lentas.
   - Teste de fumaça em produção: redireciona para o login, 401 na API, cookie forjado recusado, 503 sem senha.
-- ✔ 231 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
+- ✔ 262 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
 
 ## Notas técnicas
 - npm 11: install scripts aprovados em `allowScripts`. Pacote novo com script: `npm approve-scripts <pacote>`.
@@ -54,4 +61,4 @@
 - Publicação online (PRD § 4.1, Fase 8): **não publicar sem o login do app**. SQLite não roda na Vercel; é preciso Postgres (ex.: Neon).
 
 ## Parou em
-Esperando o usuário publicar na Vercel (passo a passo no README, seção "Publicar na Vercel") e informar o domínio. Ao receber o endereço: conferir que `GOOGLE_REDIRECT_URI` usa `https://<domínio>/api/auth/google/callback` e que o mesmo endereço está no Google Cloud. Se houver erro de build, pedir o log da Vercel. Depois, seguir para a Fase 6 (Palavras-chave), começando pela consulta `search_term_view`.
+O MVP está completo no código. Próximo passo do desenvolvimento: **Fase 7**, o teste e2e com Playwright (dependência já aprovada), usando Google e Claude falsos. Para isso, criar um modo de dados falsos ativado por variável só em teste (ex.: `APP_DADOS_FALSOS=1` em `criarApiGoogleAds`/`criarGeradorClaude`), com o fluxo conectar → painel → anúncio → gerar sugestões. **Pendências do usuário:** preencher o `.env` e testar as Fases 2 a 6 na conta real; publicar na Vercel (README) e informar o domínio.

@@ -56,7 +56,7 @@ Variáveis de ambiente (`.env`, nunca commitado; `.env.example` versionado):
 - `ConexaoGoogle`: id, email, refreshTokenCriptografado, criadoEm
 - `ContaAds`: id, customerId, nome, moeda, ehGerente, conexaoId, selecionada, loginCustomerId (MCC usada para acessar a conta; migration `conta_login_customer_id`)
 - `CacheConsulta`: chave (conta + consulta + período), json, expiraEm
-- `Sugestao`: id, customerId, anuncioId, tipo (`TITULOS_DESCRICOES` | `NEGATIVAS` | `NOVAS_PALAVRAS`), contextoUsuario, resultadoJson, modelo, tokensEntrada, tokensSaida, criadoEm
+- `Sugestao`: id, customerId, anuncioId, tipo (`TITULOS_DESCRICOES` | `ANALISE_TERMOS`), contextoUsuario, resultadoJson, modelo, tokensEntrada, tokensSaida, criadoEm
 - `Configuracao`: limiteDesperdicio (padrão 50), periodoPadrao (padrão 30)
 
 ## 3. Pastas
