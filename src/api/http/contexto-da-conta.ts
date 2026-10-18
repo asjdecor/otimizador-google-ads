@@ -1,6 +1,6 @@
-import { lerConfiguracaoGoogle } from "@/api/configuracao/ambiente";
 import { ErroParaUsuario } from "@/api/erro-para-usuario";
-import { criarApiGoogleAds, type ApiGoogleAds, type CredenciaisDeConsulta } from "@/api/integracoes/google-ads/api-google-ads";
+import { criarApiGoogleAdsDoAmbiente } from "@/api/integracoes/fabrica";
+import type { ApiGoogleAds, CredenciaisDeConsulta } from "@/api/integracoes/google-ads/api-google-ads";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { lerConfiguracaoDoApp, type ConfiguracaoDoApp } from "@/api/servicos/configuracao";
 import { lerRefreshTokenSalvo, obterEstadoDaConexao, type ContaSalva } from "@/api/servicos/conexao";
@@ -37,7 +37,7 @@ export async function carregarContextoDaConta(): Promise<ContextoDaConta> {
       conta,
       periodo,
       configuracao,
-      api: criarApiGoogleAds(lerConfiguracaoGoogle()),
+      api: criarApiGoogleAdsDoAmbiente(),
       credenciais: { customerId: conta.customerId, loginCustomerId: conta.loginCustomerId, refreshToken },
     };
   } catch (erro) {

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { lerConfiguracaoClaude } from "@/api/configuracao/ambiente";
 import { carregarContextoDaConta } from "@/api/http/contexto-da-conta";
 import { barrarOutraOrigem, responderErro, responderErroExterno } from "@/api/http/respostas";
-import { criarGeradorClaude } from "@/api/integracoes/claude/cliente";
+import { criarGeradorDoAmbiente } from "@/api/integracoes/fabrica";
 import { gerarESalvarSugestoesDoAnuncio, TAMANHO_MAXIMO_DO_CONTEXTO } from "@/api/servicos/sugestoes";
 
 /** Vercel: chamadas ao Google/IA podem levar dezenas de segundos. */
@@ -27,7 +26,7 @@ export async function POST(requisicao: Request) {
     const resultado = await gerarESalvarSugestoesDoAnuncio({
       anuncioId: corpo.data.anuncioId,
       contextoUsuario: corpo.data.contexto?.trim() || null,
-      gerador: criarGeradorClaude(lerConfiguracaoClaude()),
+      gerador: criarGeradorDoAmbiente(),
       conta,
     });
     return resultado ? NextResponse.json(resultado) : responderErro("Anúncio não encontrado nesta conta.", 404);

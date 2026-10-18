@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { claudeEstaConfigurado } from "@/api/configuracao/ambiente";
+import { iaConfiguradaNoAmbiente } from "@/api/integracoes/fabrica";
 import { carregarContextoDaConta } from "@/api/http/contexto-da-conta";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { carregarAnuncioAvaliado, idDoAnuncioEhValido, type AnuncioAvaliado } from "@/api/servicos/anuncios";
@@ -150,7 +150,7 @@ export default async function PaginaDoAnuncio({ params }: { params: Promise<{ id
       {avaliado.palavrasDoGrupo.length > 0 && (
         <p className="text-[13px] text-texto-suave">Palavras-chave do grupo: {avaliado.palavrasDoGrupo.join(", ")}</p>
       )}
-      <PainelDeSugestoes anuncioId={avaliado.id} historicoInicial={historico} iaConfigurada={claudeEstaConfigurado()} />
+      <PainelDeSugestoes anuncioId={avaliado.id} historicoInicial={historico} iaConfigurada={iaConfiguradaNoAmbiente()} />
     </section>
   );
 }

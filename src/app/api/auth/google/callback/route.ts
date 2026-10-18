@@ -1,9 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { lerConfiguracaoGoogle } from "@/api/configuracao/ambiente";
 import { ErroParaUsuario } from "@/api/erro-para-usuario";
-import { criarApiGoogleAds } from "@/api/integracoes/google-ads/api-google-ads";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
-import { criarProvedorOAuthGoogle } from "@/api/integracoes/google-ads/oauth";
+import { criarApiGoogleAdsDoAmbiente, criarProvedorOAuthDoAmbiente } from "@/api/integracoes/fabrica";
 import { COOKIE_ESTADO_OAUTH, estadoOAuthConfere } from "@/api/seguranca/requisicao";
 import { concluirConexaoGoogle } from "@/api/servicos/conexao";
 
@@ -21,8 +19,10 @@ export async function GET(requisicao: NextRequest) {
     }
     const codigo = parametros.get("code");
     if (!codigo) throw new ErroParaUsuario("O Google não devolveu o código de acesso. Tente de novo.");
-    const config = lerConfiguracaoGoogle();
-    await concluirConexaoGoogle(codigo, { provedor: criarProvedorOAuthGoogle(config), api: criarApiGoogleAds(config) });
+    await concluirConexaoGoogle(codigo, {
+      provedor: criarProvedorOAuthDoAmbiente(requisicao.url),
+      api: criarApiGoogleAdsDoAmbiente(),
+    });
     destino.searchParams.set("ok", "1");
   } catch (erro) {
     destino.searchParams.set("erro", traduzirErroGoogleAds(erro));

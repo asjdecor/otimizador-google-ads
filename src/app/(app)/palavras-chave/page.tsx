@@ -1,4 +1,4 @@
-import { claudeEstaConfigurado } from "@/api/configuracao/ambiente";
+import { iaConfiguradaNoAmbiente } from "@/api/integracoes/fabrica";
 import { carregarContextoDaConta } from "@/api/http/contexto-da-conta";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { lerUltimaAnaliseDeTermos } from "@/api/servicos/analise-de-termos";
@@ -94,7 +94,7 @@ export default async function PaginaPalavrasChave() {
         </>
       )}
 
-      <PainelAnaliseDeTermos analiseInicial={analise} iaConfigurada={claudeEstaConfigurado()} moeda={moeda} />
+      <PainelAnaliseDeTermos analiseInicial={analise} iaConfigurada={iaConfiguradaNoAmbiente()} moeda={moeda} />
 
       {dados && (
         <div className="flex flex-col gap-2">

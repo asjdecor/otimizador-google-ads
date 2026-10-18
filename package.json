@@ -14,7 +14,8 @@
     "db:generate": "prisma generate",
     "gerar-senha": "node scripts/gerar-senha.mjs",
     "db:schema-postgres": "node scripts/gerar-schema-postgres.mjs",
-    "vercel-build": "node scripts/gerar-schema-postgres.mjs --verificar && prisma generate --schema prisma/postgres/schema.prisma && prisma migrate deploy --schema prisma/postgres/schema.prisma && next build"
+    "vercel-build": "node scripts/gerar-schema-postgres.mjs --verificar && prisma generate --schema prisma/postgres/schema.prisma && prisma migrate deploy --schema prisma/postgres/schema.prisma && next build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { lerConfiguracaoGoogle } from "@/api/configuracao/ambiente";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
-import { criarProvedorOAuthGoogle } from "@/api/integracoes/google-ads/oauth";
+import { criarProvedorOAuthDoAmbiente } from "@/api/integracoes/fabrica";
 import { COOKIE_ESTADO_OAUTH, gerarEstadoOAuth } from "@/api/seguranca/requisicao";
 
 /** Início do login: manda o usuário para o Google com um "estado" guardado em cookie. */
 export function GET(requisicao: Request) {
   try {
-    const provedor = criarProvedorOAuthGoogle(lerConfiguracaoGoogle());
+    const provedor = criarProvedorOAuthDoAmbiente(requisicao.url);
     const estado = gerarEstadoOAuth();
     const resposta = NextResponse.redirect(provedor.gerarUrlDeAutorizacao(estado));
     resposta.cookies.set(COOKIE_ESTADO_OAUTH, estado, {

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { lerConfiguracaoClaude } from "@/api/configuracao/ambiente";
 import { carregarContextoDaConta } from "@/api/http/contexto-da-conta";
 import { barrarOutraOrigem, responderErro, responderErroExterno } from "@/api/http/respostas";
-import { criarGeradorClaude } from "@/api/integracoes/claude/cliente";
+import { criarGeradorDoAmbiente } from "@/api/integracoes/fabrica";
 import { analisarTermosComIa, salvarAnaliseDeTermos } from "@/api/servicos/analise-de-termos";
 import { carregarDadosDosTermos } from "@/api/servicos/dados-de-termos";
 import { TAMANHO_MAXIMO_DO_CONTEXTO } from "@/api/servicos/limites-de-sugestao";
@@ -25,7 +24,7 @@ export async function POST(requisicao: Request) {
   try {
     const { termos, palavrasPorGrupo } = await carregarDadosDosTermos(conta);
     const contextoUsuario = corpo.data.contexto?.trim() || null;
-    const resultado = await analisarTermosComIa(criarGeradorClaude(lerConfiguracaoClaude()), {
+    const resultado = await analisarTermosComIa(criarGeradorDoAmbiente(), {
       termos,
       palavrasPorGrupo,
       contextoUsuario: contextoUsuario ?? undefined,

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { lerConfiguracaoGoogle } from "@/api/configuracao/ambiente";
 import { barrarOutraOrigem, responderErroExterno } from "@/api/http/respostas";
-import { criarApiGoogleAds } from "@/api/integracoes/google-ads/api-google-ads";
+import { criarApiGoogleAdsDoAmbiente } from "@/api/integracoes/fabrica";
 import { atualizarContasDoGoogle } from "@/api/servicos/conexao";
 
 /** Vercel: chamadas ao Google/IA podem levar dezenas de segundos. */
@@ -13,7 +12,7 @@ export async function POST(requisicao: Request) {
   if (bloqueio) return bloqueio;
 
   try {
-    await atualizarContasDoGoogle(criarApiGoogleAds(lerConfiguracaoGoogle()));
+    await atualizarContasDoGoogle(criarApiGoogleAdsDoAmbiente());
     return NextResponse.json({ ok: true });
   } catch (erro) {
     return responderErroExterno(erro);

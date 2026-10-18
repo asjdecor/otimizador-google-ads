@@ -1,4 +1,4 @@
-import { listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
+import { camposGoogleFaltandoNoAmbiente } from "@/api/integracoes/fabrica";
 import { formatarIdDaConta } from "@/api/servicos/formatacao";
 import { obterEstadoDaConexao } from "@/api/servicos/conexao";
 import { AcoesDaConexao } from "@/componentes/AcoesDaConexao";
@@ -14,7 +14,7 @@ interface PropsPagina {
 export default async function PaginaConectar({ searchParams }: PropsPagina) {
   const { erro, ok } = await searchParams;
   const estado = await obterEstadoDaConexao();
-  const camposFaltando = listarCamposGoogleFaltando();
+  const camposFaltando = camposGoogleFaltandoNoAmbiente();
 
   return (
     <section className="flex max-w-3xl flex-col gap-4">
