@@ -1,0 +1,54 @@
+
+> otimizador-google-ads@0.1.0 demo
+> node scripts/demo.mjs
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": SQLite database "demo.db" at "file:./demo.db"
+
+SQLite database demo.db created at file:./demo.db
+
+2 migrations found in prisma/migrations
+
+Applying migration `20261016020642_inicial`
+Applying migration `20261016021547_conta_login_customer_id`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261016020642_inicial/
+    └─ migration.sql
+  └─ 20261016021547_conta_login_customer_id/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+
+Modo de demonstração: abra http://localhost:3000 (Ctrl+C para parar)
+
+(node:38268) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+   ▲ Next.js 15.5.28
+   - Local:        http://localhost:3000
+   - Network:      http://54.232.189.113:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1553ms
+ ✓ Compiled /middleware in 163ms (159 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 852ms (622 modules)
+ GET /login 307 in 1217ms
+ ○ Compiling /api/auth/google ...
+ ✓ Compiled /api/auth/google in 1198ms (1109 modules)
+ GET /api/auth/google 307 in 2453ms
+ ○ Compiling /api/auth/google/callback ...
+ ✓ Compiled /api/auth/google/callback in 876ms (1103 modules)
+ ✓ Compiled in 97ms (239 modules)
+ ✓ Compiled in 113ms (239 modules)
+ GET /api/auth/google/callback?code=codigo-de-demonstracao&state=sWblFNPERH1ZoaoswU0nkMP20ZDqdlJv 307 in 1367ms
+ ✓ Compiled in 88ms (239 modules)
+ ✓ Compiled /conectar in 441ms (1210 modules)
+ ✓ Compiled in 92ms (260 modules)
+ GET /conectar?ok=1 200 in 1017ms
+ ✓ Compiled in 165ms (260 modules)
+[?25h

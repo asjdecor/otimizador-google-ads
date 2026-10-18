@@ -1,0 +1,22 @@
+   ▲ Next.js 15.5.28
+   - Local:        http://localhost:3456
+   - Network:      http://54.232.189.113:3456
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1620ms
+ ✓ Compiled /middleware in 146ms (159 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 2.1s (1196 modules)
+ GET / 200 in 4213ms
+ ○ Compiling /api/auth/google ...
+ ✓ Compiled /api/auth/google in 749ms (1217 modules)
+ GET /api/auth/google 307 in 1020ms
+ ✓ Compiled /api/auth/google/callback in 271ms (1205 modules)
+ ✓ Compiled in 97ms (259 modules)
+ ✓ Compiled in 100ms (259 modules)
+ GET /api/auth/google/callback?code=codigo-de-demonstracao&state=O3ScFM6KO55Njg12GwQjkHPKZBi5SFFp 307 in 689ms
+ ✓ Compiled in 98ms (259 modules)
+ ✓ Compiled /conectar in 346ms (1230 modules)
+ GET /conectar?ok=1 200 in 773ms
+[?25h

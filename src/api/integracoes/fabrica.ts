@@ -1,18 +1,11 @@
 import { claudeEstaConfigurado, lerConfiguracaoClaude, lerConfiguracaoGoogle, listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
+import { modoDemonstracaoAtivo } from "@/api/configuracao/demonstracao";
 import { criarGeradorClaude, type GeradorDeTexto } from "./claude/cliente";
 import { ID_MCC_DEMO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "./demonstracao/dados";
 import { criarApiGoogleAds, type ApiGoogleAds } from "./google-ads/api-google-ads";
 import { criarProvedorOAuthGoogle, type ProvedorOAuth } from "./google-ads/oauth";
 
-type Ambiente = Record<string, string | undefined>;
-
-/**
- * Modo de demonstração (Google e Claude falsos): só com APP_DADOS_FALSOS=1 e NUNCA em produção/Vercel,
- * para não haver jeito de um app publicado mostrar dados inventados.
- */
-export function modoDemonstracaoAtivo(ambiente: Ambiente = process.env): boolean {
-  return ambiente.APP_DADOS_FALSOS === "1" && ambiente.NODE_ENV !== "production" && !ambiente.VERCEL;
-}
+export { modoDemonstracaoAtivo };
 
 export function criarApiGoogleAdsDoAmbiente(): ApiGoogleAds {
   if (!modoDemonstracaoAtivo()) return criarApiGoogleAds(lerConfiguracaoGoogle());

@@ -55,3 +55,17 @@ describe("dados de demonstração passam pelos mesmos mapeadores do app real", (
     expect(analise.negativas.map((n) => n.termo)).toEqual(["sofá grátis doação", "conserto de sofá"]);
   });
 });
+
+describe("urlDoBancoParaOAmbiente (demonstração nunca grava no banco real)", () => {
+  it("troca dados.db por demo.db no modo demonstração", async () => {
+    const { urlDoBancoParaOAmbiente, BANCO_DA_DEMONSTRACAO } = await import("@/api/configuracao/demonstracao");
+    expect(urlDoBancoParaOAmbiente({ APP_DADOS_FALSOS: "1", NODE_ENV: "development", DATABASE_URL: "file:./dados.db" })).toBe(BANCO_DA_DEMONSTRACAO);
+  });
+
+  it("mantém o banco quando não é demonstração ou já é outro banco", async () => {
+    const { urlDoBancoParaOAmbiente } = await import("@/api/configuracao/demonstracao");
+    expect(urlDoBancoParaOAmbiente({ NODE_ENV: "development", DATABASE_URL: "file:./dados.db" })).toBeNull();
+    expect(urlDoBancoParaOAmbiente({ APP_DADOS_FALSOS: "1", NODE_ENV: "development", DATABASE_URL: "file:./e2e.db" })).toBeNull();
+    expect(urlDoBancoParaOAmbiente({ APP_DADOS_FALSOS: "1", NODE_ENV: "production", DATABASE_URL: "file:./dados.db" })).toBeNull();
+  });
+});

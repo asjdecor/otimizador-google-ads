@@ -45,6 +45,7 @@
 - ✔ **Fase 7, teste e2e:**
   - `src/api/integracoes/fabrica.ts`: rotas e telas criam Google, OAuth e Claude por aqui. Com `APP_DADOS_FALSOS=1` (**só fora de produção e fora da Vercel**, teste cobre a trava) usa a conta de demonstração em `integracoes/demonstracao/dados.ts` (MCC + 2 contas de loja de sofás) e respostas fixas da IA.
   - `playwright.config.ts`: `next dev -p 3999`, banco `prisma/e2e.db` recriado no globalSetup, login ativo com senha do teste. `npm run test:e2e` = 2 testes (login; fluxo completo até CSV e desconectar), estáveis mesmo com o cache frio.
+  - `npm run demo` (scripts/demo.mjs) migra e usa `prisma/demo.db`. Se a demonstração for ligada apontando para `dados.db`, `urlDoBancoParaOAmbiente` troca para `demo.db` (bug real: a 1ª versão gravou a conexão falsa no banco real, já limpo).
   - Lições: esperar `networkidle` antes de clicar (hidratação em dev); `waitForURL` com 90 s na 1ª navegação de cada rota (compilação em dev); o Next tem um `role="alert"` próprio (route announcer), então procure pelo texto.
 - ✔ **Fase 8, preparação para a Vercel:**
   - Login: `src/api/seguranca/sessao.ts` (Web Crypto, funciona no Edge) + `senha.ts` (scrypt, formato `scrypt:salt:hash`, sem `$` porque o Next expande o `.env`) + `src/middleware.ts`. Tela `/login`, rotas `/api/auth/entrar` e `/api/auth/sair`, BotaoSair. Script `npm run gerar-senha -- "senha"`.
@@ -65,4 +66,4 @@
 - Publicação online (PRD § 4.1, Fase 8): **não publicar sem o login do app**. SQLite não roda na Vercel; é preciso Postgres (ex.: Neon).
 
 ## Parou em
-O código do MVP e da publicação está completo. Próximos passos dependem do usuário: (1) ver o app com `APP_DADOS_FALSOS=1 npm run dev`; (2) preencher o `.env` e testar na conta real, comparando custo, cliques e conversões com o Google Ads (critério ≤ 1%, tarefa da Fase 7); (3) publicar na Vercel (README) e informar o domínio. Se ele pedir algo novo, passar pelo agente `produto` (PRD) antes de codar; candidatos estão em "Desejáveis" no PRD (aplicar mudanças via API, alertas por e-mail, relatório PDF).
+O código do MVP e da publicação está completo. Próximos passos dependem do usuário: (1) ver o app com `npm run demo`; (2) preencher o `.env` e testar na conta real, comparando custo, cliques e conversões com o Google Ads (critério ≤ 1%, tarefa da Fase 7); (3) publicar na Vercel (README) e informar o domínio. Se ele pedir algo novo, passar pelo agente `produto` (PRD) antes de codar; candidatos estão em "Desejáveis" no PRD (aplicar mudanças via API, alertas por e-mail, relatório PDF).
