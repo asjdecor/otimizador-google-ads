@@ -2,7 +2,7 @@
 
 App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra onde a verba está sendo desperdiçada, dá nota de 0 a 100 a cada anúncio e gera títulos e descrições melhores com IA (Claude).
 
-> **Status:** em desenvolvimento. Fases 1–6 prontas (base, conexão, painel, nota e diagnóstico, sugestões com IA, palavras-chave) + login e suporte à Vercel. Veja [docs/tarefas.md](docs/tarefas.md).
+> **Status:** em desenvolvimento. Fases 1–7 prontas (base, conexão, painel, nota e diagnóstico, sugestões com IA, palavras-chave, teste e2e) + login e suporte à Vercel. Veja [docs/tarefas.md](docs/tarefas.md).
 > **Segurança:** online, o app exige senha (variáveis `APP_SENHA_HASH` e `APP_SESSAO_SEGREDO`). Sem elas, ele se bloqueia sozinho.
 
 ## O que ele faz
@@ -23,6 +23,15 @@ cp .env.example .env          # preencha as chaves (veja os comentários no arqu
 npx prisma migrate deploy      # cria o banco SQLite local
 npm run dev                    # http://localhost:3000
 ```
+
+**Só quer ver o app?** O modo de demonstração usa uma conta de exemplo (loja de sofás) e uma IA falsa, sem nenhuma chave:
+
+```bash
+npx prisma migrate deploy
+APP_DADOS_FALSOS=1 npm run dev          # PowerShell: $env:APP_DADOS_FALSOS="1"; npm run dev
+```
+
+Esse modo nunca liga em produção nem na Vercel.
 
 Chaves necessárias no `.env`:
 
@@ -59,6 +68,7 @@ Sem domínio próprio, use o endereço que a Vercel dá (`https://<projeto>.verc
 | Comando | O que faz |
 |---|---|
 | `npm test` | Testes (Vitest) — usam banco isolado e Google/Claude falsos, sem custo |
+| `npm run test:e2e` | Teste de ponta a ponta no navegador (Playwright, modo demonstração). 1ª vez: `npx playwright install chromium` |
 | `npm run typecheck` | TypeScript estrito |
 | `npm run lint` | ESLint |
 | `npm run build` | Build de produção |

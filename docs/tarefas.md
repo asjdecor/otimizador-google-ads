@@ -65,9 +65,9 @@
 ## Fase 7 — Fechamento do MVP
 | Tarefa | Prioridade | Status |
 |---|---|---|
-| Teste e2e (Playwright) com Google Ads e Claude falsos: conectar → painel → anúncio → gerar sugestões | Média | Pendente |
+| Teste e2e (Playwright) com Google Ads e Claude falsos: login → conectar → painel → anúncio → sugestões → palavras-chave → CSV → desconectar | Média | Feita |
 | Conferir métricas com a interface do Google Ads (critério ≤ 1%) numa conta real | Alta | Pendente |
-| README de como rodar | Baixa | Pendente |
+| README de como rodar (inclui modo de demonstração e publicação na Vercel) | Baixa | Feita |
 
 ## Fase 8 — Publicação online (PRD § 4.1)
 | Tarefa | Prioridade | Status |

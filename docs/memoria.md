@@ -3,7 +3,7 @@
 > Dono: agente `planejador`
 
 **Atualizado:** 2026-10-15
-**Fase atual:** Fases 1 a 6 com código pronto (o MVP do PRD está todo implementado). Faltam: testes manuais na conta real, Fase 7 (teste e2e, conferir métricas) e publicar na Vercel (ações do usuário).
+**Fase atual:** Fases 1 a 7 com código pronto. Só faltam ações do usuário: testar na conta real (e conferir as métricas, ≤ 1%) e publicar na Vercel.
 
 ## Já feito
 - ✔ Os 6 docs. Mudanças aprovadas: SQLite no lugar de PostgreSQL/Docker e Node 24.
@@ -42,12 +42,16 @@
   - `servicos/analise-de-termos.ts`: uma chamada ao Claude devolve negativas e variações. Os termos são tratados como não confiáveis no prompt. **Negativa só é aceita se o termo existir** (sem conversão, não excluído). Variações respeitam 80 caracteres e 10 palavras, não repetem existentes, e o grupo vem do `termo_de_origem`. Salva como `Sugestao` tipo `ANALISE_TERMOS`; o esquema puro em `esquema-analise-de-termos.ts` também é usado no navegador.
   - Tela `/palavras-chave`: resumo, negativas, palavras novas, painel de IA (contexto "o que vende e o que não vende") e todos os termos; botões de exportar CSV (gerado no navegador).
   - `EmBreve` removido (não tinha mais uso).
+- ✔ **Fase 7, teste e2e:**
+  - `src/api/integracoes/fabrica.ts`: rotas e telas criam Google, OAuth e Claude por aqui. Com `APP_DADOS_FALSOS=1` (**só fora de produção e fora da Vercel**, teste cobre a trava) usa a conta de demonstração em `integracoes/demonstracao/dados.ts` (MCC + 2 contas de loja de sofás) e respostas fixas da IA.
+  - `playwright.config.ts`: `next dev -p 3999`, banco `prisma/e2e.db` recriado no globalSetup, login ativo com senha do teste. `npm run test:e2e` = 2 testes (login; fluxo completo até CSV e desconectar), estáveis mesmo com o cache frio.
+  - Lições: esperar `networkidle` antes de clicar (hidratação em dev); `waitForURL` com 90 s na 1ª navegação de cada rota (compilação em dev); o Next tem um `role="alert"` próprio (route announcer), então procure pelo texto.
 - ✔ **Fase 8, preparação para a Vercel:**
   - Login: `src/api/seguranca/sessao.ts` (Web Crypto, funciona no Edge) + `senha.ts` (scrypt, formato `scrypt:salt:hash`, sem `$` porque o Next expande o `.env`) + `src/middleware.ts`. Tela `/login`, rotas `/api/auth/entrar` e `/api/auth/sair`, BotaoSair. Script `npm run gerar-senha -- "senha"`.
   - As telas foram para o grupo `src/app/(app)/`. O layout raiz é só a casca, para o login não carregar dados da conta.
   - Postgres: `scripts/gerar-schema-postgres.mjs` → `prisma/postgres/schema.prisma` + `migrations/0_inicial`. `vercel-build` verifica, gera, roda o `migrate deploy` e o build. `maxDuration = 60` nas rotas lentas.
   - Teste de fumaça em produção: redireciona para o login, 401 na API, cookie forjado recusado, 503 sem senha.
-- ✔ 262 testes passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
+- ✔ 267 testes de unidade/integração + 2 e2e passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
 
 ## Notas técnicas
 - npm 11: install scripts aprovados em `allowScripts`. Pacote novo com script: `npm approve-scripts <pacote>`.
@@ -61,4 +65,4 @@
 - Publicação online (PRD § 4.1, Fase 8): **não publicar sem o login do app**. SQLite não roda na Vercel; é preciso Postgres (ex.: Neon).
 
 ## Parou em
-O MVP está completo no código. Próximo passo do desenvolvimento: **Fase 7**, o teste e2e com Playwright (dependência já aprovada), usando Google e Claude falsos. Para isso, criar um modo de dados falsos ativado por variável só em teste (ex.: `APP_DADOS_FALSOS=1` em `criarApiGoogleAds`/`criarGeradorClaude`), com o fluxo conectar → painel → anúncio → gerar sugestões. **Pendências do usuário:** preencher o `.env` e testar as Fases 2 a 6 na conta real; publicar na Vercel (README) e informar o domínio.
+O código do MVP e da publicação está completo. Próximos passos dependem do usuário: (1) ver o app com `APP_DADOS_FALSOS=1 npm run dev`; (2) preencher o `.env` e testar na conta real, comparando custo, cliques e conversões com o Google Ads (critério ≤ 1%, tarefa da Fase 7); (3) publicar na Vercel (README) e informar o domínio. Se ele pedir algo novo, passar pelo agente `produto` (PRD) antes de codar; candidatos estão em "Desejáveis" no PRD (aplicar mudanças via API, alertas por e-mail, relatório PDF).
