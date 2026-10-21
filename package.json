@@ -16,7 +16,9 @@
     "db:schema-postgres": "node scripts/gerar-schema-postgres.mjs",
     "vercel-build": "node scripts/gerar-schema-postgres.mjs --verificar && prisma generate --schema prisma/postgres/schema.prisma && prisma migrate deploy --schema prisma/postgres/schema.prisma && next build",
     "test:e2e": "playwright test",
-    "demo": "node scripts/demo.mjs"
+    "demo": "node scripts/demo.mjs",
+    "demo:ia-real": "node scripts/demo.mjs --ia-real",
+    "verificar-ia": "node --env-file=.env scripts/verificar-ia.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

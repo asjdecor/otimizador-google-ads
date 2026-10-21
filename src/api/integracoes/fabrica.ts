@@ -1,5 +1,5 @@
 import { claudeEstaConfigurado, lerConfiguracaoClaude, lerConfiguracaoGoogle, listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
-import { modoDemonstracaoAtivo } from "@/api/configuracao/demonstracao";
+import { modoDemonstracaoAtivo, usarIaReal } from "@/api/configuracao/demonstracao";
 import { criarGeradorClaude, type GeradorDeTexto } from "./claude/cliente";
 import { ID_MCC_DEMO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "./demonstracao/dados";
 import { criarApiGoogleAds, type ApiGoogleAds } from "./google-ads/api-google-ads";
@@ -31,7 +31,7 @@ export function criarProvedorOAuthDoAmbiente(urlDaRequisicao: string): ProvedorO
 }
 
 export function criarGeradorDoAmbiente(): GeradorDeTexto {
-  if (!modoDemonstracaoAtivo()) return criarGeradorClaude(lerConfiguracaoClaude());
+  if (usarIaReal()) return criarGeradorClaude(lerConfiguracaoClaude());
   return {
     async gerarJson(pedido) {
       for (const resposta of RESPOSTAS_DA_IA_DE_DEMONSTRACAO) {
@@ -48,5 +48,5 @@ export function camposGoogleFaltandoNoAmbiente(): string[] {
 }
 
 export function iaConfiguradaNoAmbiente(): boolean {
-  return modoDemonstracaoAtivo() || claudeEstaConfigurado();
+  return usarIaReal() ? claudeEstaConfigurado() : true;
 }

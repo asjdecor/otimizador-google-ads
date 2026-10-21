@@ -32,6 +32,13 @@ npm run demo          # funciona no PowerShell e no bash; abra http://localhost:
 
 A demonstração usa um banco separado (`prisma/demo.db`) e nunca toca nos seus dados reais. Ela nunca liga em produção nem na Vercel.
 
+**Quer ver a IA de verdade antes de ter as chaves do Google?** Coloque só a `ANTHROPIC_API_KEY` no `.env` e rode:
+
+```bash
+npm run verificar-ia      # confere a chave sem gastar créditos
+npm run demo:ia-real      # loja de exemplo + Claude de verdade (gasta centavos por geração)
+```
+
 Chaves necessárias no `.env`:
 
 | Variável | Onde conseguir |
@@ -68,6 +75,8 @@ Sem domínio próprio, use o endereço que a Vercel dá (`https://<projeto>.verc
 |---|---|
 | `npm test` | Testes (Vitest) — usam banco isolado e Google/Claude falsos, sem custo |
 | `npm run demo` | App com conta de exemplo e IA falsa, sem chaves (banco `demo.db` separado) |
+| `npm run demo:ia-real` | Loja de exemplo com o Claude de verdade (gasta créditos da Anthropic) |
+| `npm run verificar-ia` | Confere a `ANTHROPIC_API_KEY` e o modelo, sem gastar créditos |
 | `npm run test:e2e` | Teste de ponta a ponta no navegador (Playwright, modo demonstração). 1ª vez: `npx playwright install chromium` |
 | `npm run typecheck` | TypeScript estrito |
 | `npm run lint` | ESLint |
