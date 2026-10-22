@@ -69,3 +69,18 @@ describe("urlDoBancoParaOAmbiente (demonstração nunca grava no banco real)", (
     expect(urlDoBancoParaOAmbiente({ APP_DADOS_FALSOS: "1", NODE_ENV: "production", DATABASE_URL: "file:./dados.db" })).toBeNull();
   });
 });
+
+describe("usarIaReal (demonstração não gasta créditos sem pedir)", () => {
+  it("fora da demonstração, a IA é sempre a real", async () => {
+    const { usarIaReal } = await import("@/api/configuracao/demonstracao");
+    expect(usarIaReal({ NODE_ENV: "development" })).toBe(true);
+    expect(usarIaReal({ NODE_ENV: "production", APP_DADOS_FALSOS: "1" })).toBe(true);
+  });
+
+  it("na demonstração, só usa a IA real com APP_DEMO_IA_REAL=1", async () => {
+    const { usarIaReal } = await import("@/api/configuracao/demonstracao");
+    expect(usarIaReal({ NODE_ENV: "development", APP_DADOS_FALSOS: "1" })).toBe(false);
+    expect(usarIaReal({ NODE_ENV: "development", APP_DADOS_FALSOS: "1", APP_DEMO_IA_REAL: "1" })).toBe(true);
+    expect(usarIaReal({ NODE_ENV: "development", APP_DADOS_FALSOS: "1", APP_DEMO_IA_REAL: "true" })).toBe(false);
+  });
+});
