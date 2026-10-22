@@ -32,9 +32,14 @@ const esquemaLinhaCustomerClient = z.object({
 /**
  * Lista as contas que o usuário consegue ler: as acessíveis direto e as filhas de cada MCC.
  * Conta acessível direto usa ela mesma como login; filha usa a MCC pela qual foi encontrada.
+ * Conta encontrada sob a `mccPreferida` usa essa MCC como login, mesmo que também seja acessível direto.
  * Se uma conta raiz falhar, ela é ignorada; se TODAS falharem, o último erro é lançado.
  */
-export async function listarContasAcessiveis(api: ApiGoogleAds, refreshToken: string): Promise<ContaAcessivel[]> {
+export async function listarContasAcessiveis(
+  api: ApiGoogleAds,
+  refreshToken: string,
+  mccPreferida: string | null = null,
+): Promise<ContaAcessivel[]> {
   const idsRaiz = await api.listarIdsAcessiveis(refreshToken);
   const raizes = new Set(idsRaiz);
   const contas = new Map<string, ContaAcessivel>();
@@ -55,13 +60,14 @@ export async function listarContasAcessiveis(api: ApiGoogleAds, refreshToken: st
       const resultado = esquemaLinhaCustomerClient.safeParse(linha);
       if (!resultado.success) continue;
       const cliente = resultado.data.customer_client;
-      if (contas.has(cliente.id)) continue;
+      const viaMccPreferida = idRaiz === mccPreferida && cliente.id !== idRaiz;
+      if (contas.has(cliente.id) && !viaMccPreferida) continue;
       contas.set(cliente.id, {
         customerId: cliente.id,
         nome: cliente.descriptive_name?.trim() || `Conta ${cliente.id}`,
         moeda: cliente.currency_code ?? "",
         ehGerente: cliente.manager ?? false,
-        loginCustomerId: raizes.has(cliente.id) ? cliente.id : idRaiz,
+        loginCustomerId: viaMccPreferida || !raizes.has(cliente.id) ? idRaiz : cliente.id,
       });
     }
   }

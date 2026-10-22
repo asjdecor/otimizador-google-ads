@@ -89,9 +89,10 @@ describe("CampoTexto", () => {
 });
 
 describe("itemEstaAtivo", () => {
-  it("Painel só fica ativo na raiz", () => {
-    expect(itemEstaAtivo("/", "/")).toBe(true);
-    expect(itemEstaAtivo("/", "/anuncios")).toBe(false);
+  it("Painel fica ativo na rota protegida", () => {
+    expect(itemEstaAtivo("/painel", "/painel")).toBe(true);
+    expect(itemEstaAtivo("/painel", "/painel/relatorios")).toBe(true);
+    expect(itemEstaAtivo("/painel", "/anuncios")).toBe(false);
   });
 
   it("subrotas ativam o item pai, mas prefixos parecidos não", () => {

@@ -44,6 +44,23 @@ describe("listarContasAcessiveis", () => {
     ]);
   });
 
+  it("com MCC preferida, conta que aparece direto E dentro dela usa a MCC como login", async () => {
+    const { api } = criarApiGoogleAdsFalsa({
+      "111": [{ id: 111, nome: "Loja" }],
+      "900": [{ id: 900, nome: "Agência", gerente: true }, { id: 111, nome: "Loja" }],
+    });
+    const contas = await listarContasAcessiveis(api, "rt", "900");
+    expect(contas.map((c) => [c.customerId, c.loginCustomerId])).toEqual([
+      ["900", "900"],
+      ["111", "900"],
+    ]);
+  });
+
+  it("MCC preferida que não está entre as raízes não muda nada", async () => {
+    const { api } = criarApiGoogleAdsFalsa({ "111": [{ id: 111, nome: "Loja" }] });
+    expect((await listarContasAcessiveis(api, "rt", "900"))[0]?.loginCustomerId).toBe("111");
+  });
+
   it("usa um nome padrão quando a conta não tem nome", async () => {
     const { api } = criarApiGoogleAdsFalsa({ "111": [{ id: 111, nome: "  " }] });
     expect((await listarContasAcessiveis(api, "rt"))[0]?.nome).toBe("Conta 111");

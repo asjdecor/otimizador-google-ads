@@ -3,9 +3,12 @@ import { ErroDeConfiguracao } from "@/api/configuracao/ambiente";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { criarProvedorOAuthGoogle, ESCOPOS_GOOGLE, type ClienteOAuthGoogle } from "@/api/integracoes/google-ads/oauth";
 
-const config = { clientId: "cid", clientSecret: "seg", redirectUri: "http://localhost:3000/cb", developerToken: "dev" };
+const config = { clientId: "cid", clientSecret: "seg", redirectUri: "http://localhost:3000/cb" };
 
-function clienteFalso(tokens: { refresh_token?: string | null; id_token?: string | null }, email?: string) {
+function clienteFalso(
+  tokens: { refresh_token?: string | null; id_token?: string | null; scope?: string | null },
+  email?: string,
+) {
   const chamadas: unknown[] = [];
   const cliente: ClienteOAuthGoogle = {
     generateAuthUrl: (opcoes) => {
@@ -22,8 +25,10 @@ function clienteFalso(tokens: { refresh_token?: string | null; id_token?: string
 describe("traduzirErroGoogleAds", () => {
   it.each([
     [new Error("invalid_grant"), "expirou ou foi revogado"],
+    [new Error("CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION"), "acesso Explorer ou superior"],
     [{ errors: [{ message: "The developer token is only approved for use with test accounts." }] }, "acesso de teste"],
-    [new Error("DEVELOPER_TOKEN_INVALID"), "Developer token inválido"],
+    [new Error("DEVELOPER_TOKEN_INVALID"), "recusou o acesso do projeto"],
+    [{ details: "Request had insufficient authentication scopes.", reason: "ACCESS_TOKEN_SCOPE_INSUFFICIENT" }, "caixa do Google Ads"],
     [{ errors: [{ message: "User doesn't have permission to access customer." }] }, "não tem permissão"],
     [new Error("CUSTOMER_NOT_ENABLED"), "desativada"],
     [new Error("RESOURCE_EXHAUSTED"), "Limite de consultas"],
@@ -56,6 +61,25 @@ describe("criarProvedorOAuthGoogle", () => {
 
   it("devolve refresh token e e-mail", async () => {
     const { cliente } = clienteFalso({ refresh_token: "rt", id_token: "idt" }, "eu@exemplo.com");
+    expect(await criarProvedorOAuthGoogle(config, cliente).trocarCodigoPorTokens("cod")).toEqual({
+      refreshToken: "rt",
+      email: "eu@exemplo.com",
+    });
+  });
+
+  it("recusa a conexão quando a permissão do Google Ads não foi marcada", async () => {
+    const { cliente } = clienteFalso(
+      { refresh_token: "rt", id_token: "idt", scope: "email https://www.googleapis.com/auth/userinfo.email openid" },
+      "eu@exemplo.com",
+    );
+    await expect(criarProvedorOAuthGoogle(config, cliente).trocarCodigoPorTokens("cod")).rejects.toThrow("caixa do Google Ads");
+  });
+
+  it("aceita quando a permissão do Google Ads veio", async () => {
+    const { cliente } = clienteFalso(
+      { refresh_token: "rt", id_token: "idt", scope: "openid https://www.googleapis.com/auth/adwords email" },
+      "eu@exemplo.com",
+    );
     expect(await criarProvedorOAuthGoogle(config, cliente).trocarCodigoPorTokens("cod")).toEqual({
       refreshToken: "rt",
       email: "eu@exemplo.com",

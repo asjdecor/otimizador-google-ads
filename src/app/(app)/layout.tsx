@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
 export default async function LayoutDoApp({ children }: { children: ReactNode }) {
   const estado = await obterEstadoDaConexao();
   const periodo = await lerPeriodoDaRequisicao((await lerConfiguracaoDoApp()).periodoPadrao);
-  const loginAtivo = lerConfiguracaoDeLogin().modo === "ativo";
+  const modoLogin = lerConfiguracaoDeLogin().modo;
+  const loginAtivo = modoLogin === "ativo" || modoLogin === "google";
   return (
     <div className="min-h-screen md:flex">
       <MenuPrincipal />

@@ -66,9 +66,11 @@ describe("token de sessão", () => {
 });
 
 describe("decidirAcesso (middleware)", () => {
-  it("login desligado libera tudo; mal configurado bloqueia tudo", async () => {
+  it("login desligado libera tudo; mal configurado preserva landing/login e bloqueia o app", async () => {
     expect(await decidirAcesso("/", undefined, { modo: "desligado" })).toBe("liberar");
-    expect(await decidirAcesso("/login", undefined, { modo: "mal-configurado", motivo: "x" })).toBe("bloquear-configuracao");
+    expect(await decidirAcesso("/", undefined, { modo: "mal-configurado", motivo: "x" })).toBe("liberar");
+    expect(await decidirAcesso("/login", undefined, { modo: "mal-configurado", motivo: "x" })).toBe("liberar");
+    expect(await decidirAcesso("/painel", undefined, { modo: "mal-configurado", motivo: "x" })).toBe("bloquear-configuracao");
   });
 
   it("sem sessão: tela vai para o login, API recebe 401, login é público", async () => {

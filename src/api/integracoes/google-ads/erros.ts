@@ -6,13 +6,24 @@ const REGRAS_DE_TRADUCAO: { padroes: RegExp; mensagem: string }[] = [
     mensagem: "O acesso ao Google expirou ou foi revogado. Desconecte e conecte a conta de novo.",
   },
   {
+    padroes: /CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION/i,
+    mensagem:
+      "O projeto Google Cloud ainda não tem acesso a contas reais. Confira o nível de acesso da Google Ads API no projeto e solicite acesso Explorer ou superior.",
+  },
+  {
     padroes: /DEVELOPER_TOKEN_NOT_APPROVED|only approved for use with test accounts/i,
     mensagem:
-      "Seu developer token só tem acesso de teste e só lê contas de teste. Peça o acesso Básico na Central de API da sua MCC.",
+      "O projeto do Google Cloud só tem acesso de teste à Google Ads API. Confira se o nível de acesso do projeto é Básico.",
   },
   {
     padroes: /DEVELOPER_TOKEN_(INVALID|PROHIBITED|PARAMETER_MISSING)|developer token is not valid/i,
-    mensagem: "Developer token inválido. Confira GOOGLE_ADS_DEVELOPER_TOKEN no arquivo .env.",
+    mensagem:
+      "O Google recusou o acesso do projeto à Google Ads API. Confira se GOOGLE_CLIENT_ID é do projeto com acesso aprovado.",
+  },
+  {
+    padroes: /ACCESS_TOKEN_SCOPE_INSUFFICIENT|insufficient authentication scopes/i,
+    mensagem:
+      "A permissão do Google Ads não foi concedida. Desconecte, conecte de novo e marque a caixa do Google Ads na tela do Google.",
   },
   {
     padroes: /USER_PERMISSION_DENIED|doesn't have permission to access customer/i,

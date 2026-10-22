@@ -15,7 +15,7 @@ async function navegarPeloLink(page: Page, link: Locator, destino: RegExp) {
 }
 
 async function entrar(page: Page) {
-  await page.goto("/");
+  await page.goto("/painel");
   await expect(page).toHaveURL(/\/login/);
   await esperarPaginaPronta(page);
   await page.locator("#senha").fill(SENHA_DO_TESTE_E2E);

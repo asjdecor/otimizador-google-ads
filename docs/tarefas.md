@@ -7,8 +7,8 @@
 | Tarefa | Prioridade | Status |
 |---|---|---|
 | Criar projeto no Google Cloud, ativar Google Ads API e criar credencial OAuth (Client ID/Secret, redirect `http://localhost:3000/api/auth/google/callback`) | Alta | Pendente |
-| Pegar o developer token na MCC (Ferramentas → Central de API) e pedir acesso **Básico** | Alta | Pendente |
-| Criar uma conta de teste do Google Ads para desenvolver enquanto o acesso Básico não sai | Alta | Pendente |
+| Confirmar no Google Cloud se a Google Ads API está ativada e se o projeto tem nível de acesso Explorer ou superior para contas reais | Alta | Pendente |
+| Criar uma conta de teste do Google Ads para desenvolver enquanto o projeto só tiver acesso Test | Alta | Pendente |
 | Criar chave da API Anthropic | Alta | Pendente |
 
 ## Fase 1 — Base

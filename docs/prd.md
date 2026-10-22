@@ -85,7 +85,7 @@ O usuário quer o app acessível num endereço web com domínio próprio. Condi�
 ## 8. Riscos
 | Risco | Impacto | Mitigação |
 |---|---|---|
-| O **developer token** do Google Ads precisa de aprovação. O acesso de teste só funciona com contas de teste. | Alto: sem acesso Básico, não dá para ler contas reais. | Pedir o acesso Básico no início do projeto e desenvolver com conta de teste enquanto aguarda. |
+| O projeto Google Cloud precisa de nível de acesso suficiente na Google Ads API. O nível Test só funciona com contas de teste; contas reais exigem Explorer ou superior. | Alto: sem esse acesso, não dá para ler contas reais. | Verificar o nível de acesso na página Google Ads API Overview do projeto e usar conta de teste enquanto o projeto estiver no nível Test. |
 | Custo da API do Claude | Médio | Gerar só quando o usuário clicar, guardar as sugestões no banco e mostrar o custo estimado por geração. |
 | Token OAuth vazar | Alto | Refresh token criptografado no banco, app rodando localmente e nunca exposto sem senha. |
 | Cotas e limites da API do Google Ads | Médio | Cache das consultas por conta e período (15 min) e botão "Atualizar". |
