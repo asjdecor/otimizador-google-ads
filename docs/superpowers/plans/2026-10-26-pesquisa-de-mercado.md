@@ -335,3 +335,30 @@ Textos fixos da spec que devem aparecer:
 - [ ] **Step 3: Acrescentar as respostas de demonstração.**
 - [ ] **Step 4: Verificação completa.** `npm run typecheck`, `npm run lint`, `npm test` e `npm run test:e2e` verdes. Depois `npm run demo` e um teste manual em http://localhost:3000/pesquisa.
 - [ ] **Step 5: Commit.** `git commit -m "Pesquisa de mercado: demonstração, e2e e documentação"`
+
+---
+
+## Depois da execução: teste manual com as APIs reais (revisão final, 2026-10-27)
+
+O código nunca chamou a Anthropic nem o Google de verdade (sem chaves). Antes de confiar na função:
+
+**Anthropic**
+1. A API aceita `web_search_20260318` / `web_fetch_20260318` (com `max_content_tokens` e `allowed_domains`) junto do beta `server-side-fallback-2026-07-01`, sem outro cabeçalho.
+2. Retomar um `pause_turn` reenviando todos os blocos acumulados não dá erro 400, e a resposta retomada traz só os blocos novos (senão as anotações duplicam).
+3. `usage.server_tool_use.web_search_requests` vem preenchido; URLs das fontes aparecem nos cartões.
+4. As anotações da fase A são boas o bastante para preencher um relatório por concorrente.
+5. Tempo de cada etapa (SITES < 240 s) e custo mostrado × cobrança no Console (meta US$ 0,30 a 1,00).
+6. Com a busca na web desligada no Console, aparece a mensagem "não está liberada".
+7. `allowed_domains` aceita o `www.` dos domínios listados (senão SITES lê menos páginas).
+
+**Google Ads**
+8. `generateKeywordIdeas` com `url_seed` e `login_customer_id` (conta filha de MCC) devolve uma lista.
+9. Volume e lances chegam como número/texto, não como objeto Long (senão tudo vira "Sem volume").
+10. Sem acesso Básico, a mensagem "volumes indisponíveis" é legível.
+11. `GAQL_SEGMENTACAO` e `GAQL_URLS_FINAIS` rodam sem erro numa conta real com muitas regiões.
+
+**Editor e Vercel**
+12. O CSV `pesquisa-de-mercado.csv` (Campaign/Ad group vazios, `Negative exact`) importa no Google Ads Editor; se não importar, rever o formato.
+13. O plano da Vercel aceita `maxDuration = 300`.
+
+Pendências adiadas na revisão final: erro na 1ª semente desativa todos os volumes (avaliar `site_seed`); custo aparece como zero com modelo fora da tabela de preços; 4 consultas ao Google sem cache a cada abertura de `/pesquisa`; marcas de concorrentes podem aparecer entre as palavras recomendadas.
