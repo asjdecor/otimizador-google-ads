@@ -1,7 +1,7 @@
 import { claudeEstaConfigurado, lerConfiguracaoClaude, lerConfiguracaoGoogle, listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
 import { modoDemonstracaoAtivo, usarIaReal } from "@/api/configuracao/demonstracao";
 import { criarGeradorClaude, type GeradorDeTexto } from "./claude/cliente";
-import { ID_MCC_DEMO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "./demonstracao/dados";
+import { ID_MCC_DEMO, IDEIAS_DE_DEMONSTRACAO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "./demonstracao/dados";
 import { criarApiGoogleAds, type ApiGoogleAds } from "./google-ads/api-google-ads";
 import { criarProvedorOAuthGoogle, type ProvedorOAuth } from "./google-ads/oauth";
 
@@ -12,6 +12,7 @@ export function criarApiGoogleAdsDoAmbiente(): ApiGoogleAds {
   return {
     listarIdsAcessiveis: async () => [ID_MCC_DEMO],
     consultar: async (_credenciais, gaql) => responderConsultaDeDemonstracao(gaql),
+    gerarIdeiasDePalavras: async () => ({ results: IDEIAS_DE_DEMONSTRACAO }),
   };
 }
 

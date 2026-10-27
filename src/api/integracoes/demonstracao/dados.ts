@@ -1,7 +1,7 @@
 // Conta de demonstração (loja de sofás) para o teste e2e e para ver o app sem chaves.
 // Só é usada com APP_DADOS_FALSOS=1 fora de produção (ver ../fabrica.ts).
 
-const reais = (valor: number) => valor * 1_000_000;
+const reais = (valor: number) => Math.round(valor * 1_000_000);
 
 export const ID_MCC_DEMO = "9000000000";
 
@@ -100,6 +100,19 @@ export function responderConsultaDeDemonstracao(gaql: string): unknown[] {
   if (gaql.includes("FROM search_term_view")) return TERMOS;
   return [];
 }
+
+/** Ideias do Planejador de Palavras-chave, no formato cru da API (a loja de sofás de São Paulo). */
+export const IDEIAS_DE_DEMONSTRACAO: unknown[] = [
+  { text: "sofá retrátil", keyword_idea_metrics: { avg_monthly_searches: 12100, competition: 4, low_top_of_page_bid_micros: reais(1.23), high_top_of_page_bid_micros: reais(4.56) } },
+  { text: "sofá 3 lugares", keyword_idea_metrics: { avg_monthly_searches: 8100, competition: 3, low_top_of_page_bid_micros: reais(0.9), high_top_of_page_bid_micros: reais(3.2) } },
+  { text: "sofá cama", keyword_idea_metrics: { avg_monthly_searches: 14800, competition: 4, low_top_of_page_bid_micros: reais(1.1), high_top_of_page_bid_micros: reais(3.9) } },
+  { text: "sofá de canto", keyword_idea_metrics: { avg_monthly_searches: 5400, competition: 3, low_top_of_page_bid_micros: reais(0.8), high_top_of_page_bid_micros: reais(2.7) } },
+  { text: "sofá reclinável", keyword_idea_metrics: { avg_monthly_searches: 6600, competition: 2, low_top_of_page_bid_micros: reais(0.7), high_top_of_page_bid_micros: reais(2.4) } },
+  { text: "sofá barato em são paulo", keyword_idea_metrics: { avg_monthly_searches: 720, competition: 2, low_top_of_page_bid_micros: reais(0.5), high_top_of_page_bid_micros: reais(1.8) } },
+  { text: "loja de sofá zona sul", keyword_idea_metrics: { avg_monthly_searches: 210, competition: 2, low_top_of_page_bid_micros: reais(0.6), high_top_of_page_bid_micros: reais(1.5) } },
+  { text: "limpeza de sofá", keyword_idea_metrics: { avg_monthly_searches: 9900, competition: 3, low_top_of_page_bid_micros: reais(0.4), high_top_of_page_bid_micros: reais(1.2) } },
+  { text: "poltrona decorativa" },
+];
 
 /** Respostas fixas do "Claude" de demonstração, uma para cada tipo de pedido. */
 export const RESPOSTAS_DA_IA_DE_DEMONSTRACAO: unknown[] = [

@@ -24,7 +24,7 @@ describe("modoDemonstracaoAtivo (trava de segurança)", () => {
 
 describe("dados de demonstração passam pelos mesmos mapeadores do app real", () => {
   it("contas: MCC + 2 contas de anúncios", async () => {
-    const api = { listarIdsAcessiveis: async () => [ID_MCC_DEMO], consultar: async (_c: unknown, g: string) => responderConsultaDeDemonstracao(g) };
+    const api = { listarIdsAcessiveis: async () => [ID_MCC_DEMO], consultar: async (_c: unknown, g: string) => responderConsultaDeDemonstracao(g), gerarIdeiasDePalavras: async () => ({}) };
     const contas = await listarContasAcessiveis(api, "rt");
     expect(contas.filter((c) => !c.ehGerente)).toHaveLength(2);
   });

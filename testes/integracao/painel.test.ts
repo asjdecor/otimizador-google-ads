@@ -11,6 +11,7 @@ function criarApiComMetricas() {
   const gaqls: string[] = [];
   const api: ApiGoogleAds = {
     listarIdsAcessiveis: async () => ["111"],
+    gerarIdeiasDePalavras: async () => ({ results: [] }),
     consultar: async (_credenciais, gaql) => {
       gaqls.push(gaql);
       if (gaql.includes("FROM campaign")) {

@@ -67,6 +67,7 @@ describe("listarContasAcessiveis", () => {
   it("ignora linhas em formato inesperado", async () => {
     const api = {
       listarIdsAcessiveis: async () => ["111"],
+      gerarIdeiasDePalavras: async () => ({}),
       consultar: async () => [{ outra_coisa: 1 }, { customer_client: { id: 111, descriptive_name: "Loja" } }],
     };
     const contas = await listarContasAcessiveis(api, "rt");

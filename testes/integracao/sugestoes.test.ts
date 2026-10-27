@@ -6,6 +6,7 @@ import { criarGeradorFalso } from "../apoio/claude-falso";
 
 const api: ApiGoogleAds = {
   listarIdsAcessiveis: async () => ["111"],
+  gerarIdeiasDePalavras: async () => ({ results: [] }),
   consultar: async (_c, gaql) => {
     if (gaql.includes("RESPONSIVE_SEARCH_AD")) {
       return [
