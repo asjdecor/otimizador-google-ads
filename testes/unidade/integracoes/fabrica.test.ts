@@ -45,6 +45,9 @@ describe("dados de demonstração passam pelos mesmos mapeadores do app real", (
         }
         throw new Error("sem resposta");
       },
+      pesquisarNaWeb: async () => {
+        throw new Error("não usado aqui");
+      },
     };
     const [anuncio] = mapearLinhasDeAnuncioRsa(responderConsultaDeDemonstracao(GAQL_ANUNCIOS_RSA));
     const sugestoes = await gerarSugestoesDeTitulos(gerador, { anuncio: anuncio!, palavrasDoGrupo: ["sofá retrátil"] });

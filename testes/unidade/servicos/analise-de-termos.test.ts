@@ -11,6 +11,9 @@ function geradorCom(resposta: unknown) {
       pedidos.push(pedido);
       return { dados: pedido.esquema.parse(resposta), modelo: "claude-opus-5-5", tokensEntrada: 2000, tokensSaida: 400 };
     },
+    pesquisarNaWeb: async () => {
+      throw new Error("A análise de termos não pesquisa na web.");
+    },
   };
   return { gerador, pedidos };
 }

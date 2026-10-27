@@ -1,23 +1,33 @@
-import type { GeradorDeTexto } from "@/api/integracoes/claude/cliente";
+import type { GeradorDeTexto, PedidoDePesquisa } from "@/api/integracoes/claude/cliente";
 
 export interface RespostaFalsa {
   titulos: string[];
   descricoes: string[];
 }
 
-/** Claude falso: devolve as respostas da lista em ordem (repete a última) e guarda as mensagens recebidas. */
-export function criarGeradorFalso(respostas: RespostaFalsa[], modelo = "claude-opus-5-5") {
+/**
+ * Claude falso: devolve as respostas da lista em ordem (repete a última) e guarda as mensagens recebidas.
+ * `pesquisarNaWeb` usa a mesma lista e guarda os pedidos de pesquisa (com os limites) em `pesquisas`.
+ */
+export function criarGeradorFalso(respostas: unknown[], modelo = "claude-opus-5-5") {
   const mensagens: string[] = [];
   const sistemas: string[] = [];
+  const pesquisas: PedidoDePesquisa<unknown>[] = [];
+  const proximaResposta = () => respostas[Math.min(mensagens.length - 1, respostas.length - 1)];
   const gerador: GeradorDeTexto = {
-    async gerarJson<T>(pedido: { sistema: string; mensagem: string; esquema: { parse(valor: unknown): T } }) {
+    async gerarJson(pedido) {
       mensagens.push(pedido.mensagem);
       sistemas.push(pedido.sistema);
-      const resposta = respostas[Math.min(mensagens.length - 1, respostas.length - 1)];
-      return { dados: pedido.esquema.parse(resposta), modelo, tokensEntrada: 1000, tokensSaida: 500 };
+      return { dados: pedido.esquema.parse(proximaResposta()), modelo, tokensEntrada: 1000, tokensSaida: 500 };
+    },
+    async pesquisarNaWeb(pedido) {
+      mensagens.push(pedido.mensagem);
+      sistemas.push(pedido.sistema);
+      pesquisas.push(pedido);
+      return { dados: pedido.esquema.parse(proximaResposta()), modelo, tokensEntrada: 1000, tokensSaida: 500, buscasNaWeb: 3 };
     },
   };
-  return { gerador, mensagens, sistemas };
+  return { gerador, mensagens, sistemas, pesquisas };
 }
 
 export const tituloDeTamanho = (n: number, marca = "T") => `${marca}${"x".repeat(Math.max(0, n - marca.length))}`;

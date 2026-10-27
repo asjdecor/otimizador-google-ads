@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import { claudeEstaConfigurado, lerConfiguracaoClaude, lerConfiguracaoGoogle, listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
 import { modoDemonstracaoAtivo, usarIaReal } from "@/api/configuracao/demonstracao";
 import { criarGeradorClaude, type GeradorDeTexto } from "./claude/cliente";
@@ -31,15 +32,23 @@ export function criarProvedorOAuthDoAmbiente(urlDaRequisicao: string): ProvedorO
   };
 }
 
+/** Primeira resposta de demonstração que passa no esquema do pedido. */
+function respostaDeDemonstracao<T>(esquema: z.ZodType<T>): T {
+  for (const resposta of RESPOSTAS_DA_IA_DE_DEMONSTRACAO) {
+    const lido = esquema.safeParse(resposta);
+    if (lido.success) return lido.data;
+  }
+  throw new Error("Sem resposta de demonstração para este pedido.");
+}
+
 export function criarGeradorDoAmbiente(): GeradorDeTexto {
   if (usarIaReal()) return criarGeradorClaude(lerConfiguracaoClaude());
   return {
     async gerarJson(pedido) {
-      for (const resposta of RESPOSTAS_DA_IA_DE_DEMONSTRACAO) {
-        const lido = pedido.esquema.safeParse(resposta);
-        if (lido.success) return { dados: lido.data, modelo: "demonstracao", tokensEntrada: 0, tokensSaida: 0 };
-      }
-      throw new Error("Sem resposta de demonstração para este pedido.");
+      return { dados: respostaDeDemonstracao(pedido.esquema), modelo: "demonstracao", tokensEntrada: 0, tokensSaida: 0 };
+    },
+    async pesquisarNaWeb(pedido) {
+      return { dados: respostaDeDemonstracao(pedido.esquema), modelo: "demonstracao", tokensEntrada: 0, tokensSaida: 0, buscasNaWeb: 0 };
     },
   };
 }
