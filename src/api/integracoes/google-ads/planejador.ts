@@ -46,7 +46,8 @@ const esquemaIdeia = z.object({
     .partial()
     .nullish(),
 });
-const esquemaResposta = z.object({ results: z.array(z.unknown()) });
+/** Aceita a lista crua (resposta paginada da biblioteca) ou `{ results: [...] }` (demonstração). */
+const esquemaResposta = z.union([z.array(z.unknown()), z.object({ results: z.array(z.unknown()) }).transform((r) => r.results)]);
 
 function emReais(micros: number | null | undefined): number | null {
   return micros == null ? null : microsParaReais(micros);
@@ -56,7 +57,7 @@ export function mapearIdeiasDePalavras(resposta: unknown): IdeiaDePalavra[] {
   const lida = esquemaResposta.safeParse(resposta);
   if (!lida.success) return [];
   const vistos = new Set<string>();
-  return lida.data.results.flatMap((linha) => {
+  return lida.data.flatMap((linha) => {
     const r = esquemaIdeia.safeParse(linha);
     if (!r.success) return [];
     const chave = normalizarTexto(r.data.text);

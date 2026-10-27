@@ -52,10 +52,21 @@ describe("mapearIdeiasDePalavras", () => {
     ]);
   });
 
+  it("lista crua de linhas (resposta paginada) mapeia igual a { results }", () => {
+    const linhas = [
+      { text: "sofá retrátil", keyword_idea_metrics: { avg_monthly_searches: 12100, competition: 4, low_top_of_page_bid_micros: 1_230_000 } },
+      { text: "poltrona" },
+    ];
+    expect(mapearIdeiasDePalavras(linhas)).toEqual(mapearIdeiasDePalavras({ results: linhas }));
+    expect(mapearIdeiasDePalavras(linhas)).toHaveLength(2);
+  });
+
   it("resposta vazia ou {} → []", () => {
     expect(mapearIdeiasDePalavras({})).toEqual([]);
     expect(mapearIdeiasDePalavras({ results: [] })).toEqual([]);
+    expect(mapearIdeiasDePalavras([])).toEqual([]);
     expect(mapearIdeiasDePalavras(null)).toEqual([]);
+    expect(mapearIdeiasDePalavras(undefined)).toEqual([]);
   });
 });
 
