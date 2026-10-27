@@ -7,12 +7,11 @@ import type { PalavrasPorGrupo } from "@/api/integracoes/google-ads/anuncios";
 import type { TermoDePesquisa } from "@/api/integracoes/google-ads/termos";
 import { normalizarTexto } from "./diagnostico";
 import { esquemaConteudoDaAnalise, type AnaliseSalva } from "./esquema-analise-de-termos";
-import { TAMANHO_MAXIMO_DO_CONTEXTO } from "./limites-de-sugestao";
+import { MAXIMO_CARACTERES_PALAVRA, MAXIMO_PALAVRAS_POR_PALAVRA_CHAVE, TAMANHO_MAXIMO_DO_CONTEXTO } from "./limites-de-sugestao";
 import type { Correspondencia, SugestaoDeNegativa, SugestaoDePalavraNova } from "./termos";
 
-/** Limites do Google Ads para palavra-chave. */
-export const MAXIMO_CARACTERES_PALAVRA = 80;
-export const MAXIMO_PALAVRAS_POR_PALAVRA_CHAVE = 10;
+// Os limites vivem em limites-de-sugestao.ts (módulo puro); reexportados para quem já importa daqui.
+export { MAXIMO_CARACTERES_PALAVRA, MAXIMO_PALAVRAS_POR_PALAVRA_CHAVE };
 const TERMOS_SEM_CONVERSAO_ENVIADOS = 150;
 const TERMOS_QUE_CONVERTERAM_ENVIADOS = 50;
 const PALAVRAS_EXISTENTES_ENVIADAS = 200;
