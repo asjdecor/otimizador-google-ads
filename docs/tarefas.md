@@ -1,6 +1,6 @@
 # Tarefas
 
-> Dono: agente `planejador` · Atualizado: 2026-10-26
+> Dono: agente `planejador` · Atualizado: 2026-10-27
 > Status: Pendente / Em andamento / Feita · Cada tarefa cabe em uma sessão e tem resultado verificável.
 
 ## Fase 0 — Pré-requisitos (usuário, fora do código)

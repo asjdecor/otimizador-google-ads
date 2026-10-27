@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { analisarTermosComIa } from "@/api/servicos/analise-de-termos";
+import { analisarTermosComIa, esquemaRespostaDeAnalise } from "@/api/servicos/analise-de-termos";
 import { gerarSugestoesDeTitulos } from "@/api/servicos/sugestoes";
 import { listarContasAcessiveis } from "@/api/integracoes/google-ads/contas";
 import { mapearLinhasDeTermo, montarGaqlDeTermos } from "@/api/integracoes/google-ads/termos";
 import { mapearLinhasDeAnuncioRsa, GAQL_ANUNCIOS_RSA, GAQL_PALAVRAS_DOS_GRUPOS, mapearPalavrasPorGrupo } from "@/api/integracoes/google-ads/anuncios";
+import { mapearIdeiasDePalavras } from "@/api/integracoes/google-ads/planejador";
+import { filtrarRecomendacoes } from "@/api/servicos/filtros-da-pesquisa";
 import { modoDemonstracaoAtivo } from "@/api/integracoes/fabrica";
-import { ID_MCC_DEMO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "@/api/integracoes/demonstracao/dados";
+import { ID_MCC_DEMO, IDEIAS_DE_DEMONSTRACAO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "@/api/integracoes/demonstracao/dados";
 import type { GeradorDeTexto } from "@/api/integracoes/claude/cliente";
-import { esquemaRespostaDeAnalise } from "@/api/servicos/analise-de-termos";
 import { esquemaRespostaConcorrentes, esquemaRespostaRecomendacao, esquemaRespostaSites } from "@/api/servicos/esquema-pesquisa-de-mercado";
 import { esquemaRespostaDeSugestoes } from "@/api/servicos/sugestoes";
 
@@ -77,6 +78,22 @@ describe("cada esquema recebe exatamente uma resposta de demonstração (a certa
       expect(quePassam).toEqual([indice]);
     });
   }
+
+  it("a recomendação de demonstração mantém pelo menos 3 palavras e descarta as que devem cair", () => {
+    const resposta = RESPOSTAS_DA_IA_DE_DEMONSTRACAO.map((r) => esquemaRespostaRecomendacao.safeParse(r)).find((l) => l.success)?.data;
+    expect(resposta).toBeDefined();
+    const palavrasDaConta = (responderConsultaDeDemonstracao(GAQL_PALAVRAS_DOS_GRUPOS) as { ad_group_criterion: { keyword: { text: string } } }[]).map(
+      (l) => l.ad_group_criterion.keyword.text,
+    );
+    const volumes = { disponivel: true as const, ideias: mapearIdeiasDePalavras({ results: IDEIAS_DE_DEMONSTRACAO }) };
+    const { recomendadas, negativas } = filtrarRecomendacoes(resposta!, volumes, palavrasDaConta);
+    const textos = recomendadas.map((p) => p.texto);
+    expect(recomendadas.length).toBeGreaterThanOrEqual(3);
+    expect(textos).not.toContain("sofá retrátil");
+    expect(textos).not.toContain("sofá espacial inexistente");
+    expect(recomendadas.every((p) => p.volumeMensal !== null)).toBe(true);
+    expect(negativas.length).toBeGreaterThan(0);
+  });
 
   it("a demonstração tem 3 concorrentes .example, um deles o próprio site", () => {
     const { concorrentes } = esquemaRespostaConcorrentes.parse(RESPOSTAS_DA_IA_DE_DEMONSTRACAO[2]);

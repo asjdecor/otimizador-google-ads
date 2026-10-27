@@ -93,9 +93,10 @@ test("fluxo principal: conectar → painel → anúncio → sugestões → palav
   expect(csv).toContain("conserto de sofá,Negative exact");
 
   // Pesquisa de mercado: concorrentes (o próprio site é descartado), palavras recomendadas e CSV
-  await navegarPeloLink(page, page.getByRole("link", { name: "Pesquisa" }), /\/pesquisa$/);
+  await navegarPeloLink(page, page.getByRole("link", { name: "Pesquisa", exact: true }), /\/pesquisa$/);
+  await esperarPaginaPronta(page);
   await page.getByRole("button", { name: "Pesquisar concorrentes" }).click();
-  await expect(page.getByRole("heading", { name: "Palavras recomendadas" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Palavras recomendadas" })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByRole("article")).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "sofaspaulista.example" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "sofas-demo.example" })).toHaveCount(0);

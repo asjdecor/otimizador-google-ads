@@ -2,7 +2,7 @@
 
 > Dono: agente `planejador`
 
-**Atualizado:** 2026-10-26
+**Atualizado:** 2026-10-27
 **Fase atual:** Fases 1 a 9 com código pronto (Fase 9 = Pesquisa de mercado, Parte 1). Faltam ações do usuário: testar na conta real (métricas ≤ 1% e uma pesquisa de mercado) e publicar na Vercel. A Parte 2 (F7, criar campanha a partir da pesquisa) ainda não tem plano.
 
 ## Já feito
@@ -61,7 +61,7 @@
   - Rotas `POST /api/pesquisa` e `POST /api/pesquisa/[id]/etapa`; tela `/pesquisa` (menu "Pesquisa"): PainelDePesquisa, CartaoConcorrente, TabelaDePalavrasRecomendadas e CSV no formato do Google Ads Editor. Custo mostrado na tela (US$ 0,30 a 1,00).
   - Demonstração: 3 respostas novas em `RESPOSTAS_DA_IA_DE_DEMONSTRACAO` (concorrentes com o próprio site para provar o filtro, relatórios, recomendação). O gerador escolhe pelo `safeParse`, então cada resposta só pode passar no esquema certo; `fabrica.test.ts` prova isso para os 5 esquemas. E2e ganhou o passo da pesquisa.
   - Lições: o `google-gax` devolve **lista** nas respostas paginadas; `parse()` do SDK não é seguro junto com as ferramentas de web (por isso as duas fases); o servidor de dev trava a DLL do Prisma, então pare-o antes de `migrate` e `build`.
-- ✔ mais de 360 testes de unidade/integração + 2 e2e passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
+- ✔ 370 testes de unidade/integração + 2 e2e passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
 
 ## Notas técnicas
 - npm 11: install scripts aprovados em `allowScripts`. Pacote novo com script: `npm approve-scripts <pacote>`.
