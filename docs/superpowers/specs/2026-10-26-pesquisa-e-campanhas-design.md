@@ -122,6 +122,7 @@ model PesquisaMercado {
   recomendacaoJson   String?
   erroEtapa       String?
   emExecucao      Boolean  @default(false) // trava contra rodar a mesma etapa em duas abas
+  execucaoIniciadaEm DateTime? // a trava expira depois de 6 min (função morta pelo maxDuration)
   custoDolares    Float    @default(0)
   criadoEm        DateTime @default(now())
   @@index([customerId])

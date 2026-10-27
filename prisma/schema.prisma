@@ -54,7 +54,7 @@ model Sugestao {
 }
 
 /// Pesquisa de mercado de uma conta. etapa: CONCORRENTES | SITES | VOLUMES | RECOMENDACAO | CONCLUIDA
-/// emExecucao: trava contra rodar a mesma etapa duas vezes ao mesmo tempo.
+/// emExecucao: trava contra rodar a mesma etapa duas vezes ao mesmo tempo; expira 6 min após execucaoIniciadaEm.
 model PesquisaMercado {
   id                 String   @id @default(cuid())
   customerId         String
@@ -66,6 +66,7 @@ model PesquisaMercado {
   recomendacaoJson   String?
   erroEtapa          String?
   emExecucao         Boolean  @default(false)
+  execucaoIniciadaEm DateTime?
   custoDolares       Float    @default(0)
   criadoEm           DateTime @default(now())
 
