@@ -89,13 +89,28 @@ const TERMOS = [
   { search_term_view: { search_term: "poltrona do papai", status: 5 }, ad_group: grupoPoltronas, campaign: { name: "Pesquisa - Poltronas" }, metrics: { impressions: 300, clicks: 8, cost_micros: reais(25), conversions: 1 } },
 ];
 
+const SEGMENTACAO = [
+  { campaign_criterion: { type: 7, negative: false, location: { geo_target_constant: "geoTargetConstants/1001773" } } },
+  { campaign_criterion: { type: 20, negative: false, language: { language_constant: "languageConstants/1014" } } },
+];
+
+const NOMES_GEO = [{ geo_target_constant: { canonical_name: "São Paulo,São Paulo,Brazil" } }];
+
+const URLS_FINAIS = [
+  { ad_group_ad: { ad: { final_urls: ["https://www.sofas-demo.example/sofas"] } } },
+  { ad_group_ad: { ad: { final_urls: ["https://www.sofas-demo.example/poltronas"] } } },
+];
+
 /** Responde cada GAQL do app com os dados acima (a ordem dos testes importa: o mais específico primeiro). */
 export function responderConsultaDeDemonstracao(gaql: string): unknown[] {
   if (gaql.includes("FROM customer_client")) return CONTAS;
+  if (gaql.includes("FROM campaign_criterion")) return SEGMENTACAO; // antes de "FROM campaign"
+  if (gaql.includes("FROM geo_target_constant")) return NOMES_GEO;
   if (gaql.includes("FROM campaign")) return CAMPANHAS;
   if (gaql.includes("FROM keyword_view")) return PALAVRAS_COM_METRICAS;
   if (gaql.includes("RESPONSIVE_SEARCH_AD")) return ANUNCIOS_RSA;
   if (gaql.includes("FROM ad_group_criterion")) return PALAVRAS_DOS_GRUPOS;
+  if (gaql.includes("SELECT ad_group_ad.ad.final_urls")) return URLS_FINAIS;
   if (gaql.includes("FROM ad_group_ad")) return METRICAS_DE_ANUNCIOS;
   if (gaql.includes("FROM search_term_view")) return TERMOS;
   return [];
