@@ -60,7 +60,7 @@
 - Vitest 5 usa `oxc` para JSX. Testes de componente usam `renderToStaticMarkup`.
 - TS 6 exige `src/tipos/css.d.ts`.
 - `lerChaveDeCriptografia(undefined)` usa o `.env` (parâmetro padrão). Para testar "ausente", passe `""`.
-- Os subagentes estão bloqueados pelo plugin vaara-governance. O assistente principal faz os papéis da equipe. O mesmo plugin bloqueia `curl -X POST`, mesmo para localhost; teste os POSTs por testes automatizados.
+- O plugin vaara-governance foi removido (informado pelo usuário em 2026-10-26): subagentes e `curl -X POST` voltaram a ser possíveis.
 - Para ler uma conta filha de MCC, use sempre `loginCustomerId` da `ContaAds` nas consultas (`ApiGoogleAds.consultar`).
 - `GOOGLE_ADS_LOGIN_CUSTOMER_ID` do `.env` não é usado: cada `ContaAds` guarda seu próprio `loginCustomerId`, descoberto na listagem.
 - Testes de componente: o React 19 nem sempre insere `<!-- -->` entre textos vizinhos; use regex com o marcador opcional.
