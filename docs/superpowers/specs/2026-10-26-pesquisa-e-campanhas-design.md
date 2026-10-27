@@ -121,6 +121,7 @@ model PesquisaMercado {
   volumesJson        String?
   recomendacaoJson   String?
   erroEtapa       String?
+  emExecucao      Boolean  @default(false) // trava contra rodar a mesma etapa em duas abas
   custoDolares    Float    @default(0)
   criadoEm        DateTime @default(now())
   @@index([customerId])

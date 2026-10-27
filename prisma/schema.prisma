@@ -53,6 +53,25 @@ model Sugestao {
   @@index([customerId, anuncioId])
 }
 
+/// Pesquisa de mercado de uma conta. etapa: CONCORRENTES | SITES | VOLUMES | RECOMENDACAO | CONCLUIDA
+/// emExecucao: trava contra rodar a mesma etapa duas vezes ao mesmo tempo.
+model PesquisaMercado {
+  id                 String   @id @default(cuid())
+  customerId         String
+  etapa              String
+  pontoDePartidaJson String
+  concorrentesJson   String?
+  sitesJson          String?
+  volumesJson        String?
+  recomendacaoJson   String?
+  erroEtapa          String?
+  emExecucao         Boolean  @default(false)
+  custoDolares       Float    @default(0)
+  criadoEm           DateTime @default(now())
+
+  @@index([customerId])
+}
+
 /// Configuração única do app (linha id = 1).
 model Configuracao {
   id                Int @id @default(1)

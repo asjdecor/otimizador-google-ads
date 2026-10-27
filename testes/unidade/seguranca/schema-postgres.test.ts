@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const modelos = (schema: string) => [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]).sort();
@@ -18,8 +18,12 @@ describe("schema PostgreSQL (Vercel) gerado a partir do SQLite", () => {
     expect(postgres).not.toContain('"sqlite"');
   });
 
-  it("a migration inicial do Postgres cria todas as tabelas", () => {
-    const sql = readFileSync("prisma/postgres/migrations/0_inicial/migration.sql", "utf8");
+  it("as migrations do Postgres criam todas as tabelas", () => {
+    const pasta = "prisma/postgres/migrations";
+    const sql = readdirSync(pasta, { withFileTypes: true })
+      .filter((item) => item.isDirectory())
+      .map((item) => readFileSync(`${pasta}/${item.name}/migration.sql`, "utf8"))
+      .join("\n");
     for (const modelo of modelos(readFileSync("prisma/schema.prisma", "utf8"))) {
       expect(sql).toContain(`CREATE TABLE "${modelo}"`);
     }
