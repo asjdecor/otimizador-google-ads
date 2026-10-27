@@ -35,7 +35,7 @@ test("login: sem sessão vai para o login, senha errada é recusada", async ({ p
   expect(api.status()).toBe(401);
 });
 
-test("fluxo principal: conectar → painel → anúncio → sugestões → palavras-chave → desconectar", async ({ page }) => {
+test("fluxo principal: conectar → painel → anúncio → sugestões → palavras-chave → pesquisa de mercado → desconectar", async ({ page }) => {
   await entrar(page);
 
   // Conectar (OAuth de demonstração volta direto para o app)
@@ -91,6 +91,21 @@ test("fluxo principal: conectar → painel → anúncio → sugestões → palav
   const csv = readFileSync(await download.path(), "utf8");
   expect(csv).toContain("Campaign,Ad group,Keyword,Criterion Type");
   expect(csv).toContain("conserto de sofá,Negative exact");
+
+  // Pesquisa de mercado: concorrentes (o próprio site é descartado), palavras recomendadas e CSV
+  await navegarPeloLink(page, page.getByRole("link", { name: "Pesquisa" }), /\/pesquisa$/);
+  await page.getByRole("button", { name: "Pesquisar concorrentes" }).click();
+  await expect(page.getByRole("heading", { name: "Palavras recomendadas" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("article")).toHaveCount(2);
+  await expect(page.getByRole("heading", { name: "sofaspaulista.example" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "sofas-demo.example" })).toHaveCount(0);
+  const [downloadPesquisa] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: /Exportar CSV/ }).first().click(),
+  ]);
+  expect(downloadPesquisa.suggestedFilename()).toBe("pesquisa-de-mercado.csv");
+  const csvPesquisa = readFileSync(await downloadPesquisa.path(), "utf8");
+  expect(csvPesquisa).toContain("sofá cama");
 
   // Desconectar e sair
   await page.goto("/conectar");

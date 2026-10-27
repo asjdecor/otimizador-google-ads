@@ -154,4 +154,52 @@ export const RESPOSTAS_DA_IA_DE_DEMONSTRACAO: unknown[] = [
       { texto: "poltrona reclinável", correspondencia: "FRASE", termo_de_origem: "poltrona do papai", motivo: "Sinônimo do termo que converteu." },
     ],
   },
+  // Pesquisa de mercado, etapa 1: concorrentes (o 3º é o próprio site e deve ser descartado pelo filtro).
+  {
+    concorrentes: [
+      { nome: "Sofás Paulista", site: "https://www.sofaspaulista.example", motivo: "Fábrica de sofás sob medida na Grande São Paulo." },
+      { nome: "Casa do Estofado", site: "casadoestofado.example", motivo: "Loja de estofados com showroom em São Paulo." },
+      { nome: "Sofás Demo", site: "https://www.sofas-demo.example", motivo: "É o próprio site do anunciante." },
+    ],
+  },
+  // Etapa 2: o que cada site mostra ao público.
+  {
+    relatorios: [
+      {
+        site: "sofaspaulista.example",
+        lido: true,
+        oQueVende: "Sofás retráteis e reclináveis sob medida, com fábrica própria.",
+        promessas: ["Entrega em 20 dias", "Garantia de 3 anos"],
+        precos: ["Sofá retrátil 3 lugares a partir de R$ 2.490", "Parcelamento em 12x"],
+        diferenciais: ["Projeto em 3D", "Showroom na Zona Oeste"],
+        pontosFracos: ["Poucas opções de tecido impermeável", "Site sem avaliações de clientes"],
+        fontes: ["https://www.sofaspaulista.example/produtos", "https://www.sofaspaulista.example/sobre"],
+      },
+      {
+        site: "casadoestofado.example",
+        lido: true,
+        oQueVende: "Sofás prontos e estofados em geral, com foco em preço baixo.",
+        promessas: ["Menor preço da região", "Frete grátis acima de R$ 1.500"],
+        precos: ["Sofá 2 lugares a partir de R$ 899"],
+        diferenciais: ["Pronta entrega", "Cupom de primeira compra"],
+        pontosFracos: ["Não faz sob medida", "Garantia de apenas 1 ano"],
+        fontes: ["https://www.casadoestofado.example/ofertas"],
+      },
+    ],
+  },
+  // Etapa 4: recomendação (só vale o que está nas ideias do Planejador e ainda não é palavra da conta).
+  {
+    palavras: [
+      { texto: "sofá cama", correspondencia: "FRASE", motivo: "Muito procurado e os concorrentes anunciam pouco esse modelo." },
+      { texto: "sofá 3 lugares", correspondencia: "EXATA", motivo: "Os dois concorrentes lidos destacam o modelo de 3 lugares." },
+      { texto: "sofá de canto", correspondencia: "FRASE", motivo: "Opção para salas grandes que os concorrentes não detalham." },
+      { texto: "sofá reclinável", correspondencia: "FRASE", motivo: "Ponto forte da concorrência com concorrência baixa no leilão." },
+      { texto: "sofá retrátil", correspondencia: "EXATA", motivo: "Já é palavra da conta; o filtro descarta." },
+      { texto: "sofá espacial inexistente", correspondencia: "FRASE", motivo: "Sem volume no Planejador; o filtro descarta." },
+    ],
+    negativas: [
+      { termo: "limpeza de sofá", motivo: "Procura serviço de limpeza, que a loja não oferece." },
+      { termo: "sofá usado", motivo: "A loja vende só sofás novos." },
+    ],
+  },
 ];

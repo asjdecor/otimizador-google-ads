@@ -2,8 +2,8 @@
 
 > Dono: agente `planejador`
 
-**Atualizado:** 2026-10-15
-**Fase atual:** Fases 1 a 7 com código pronto. Só faltam ações do usuário: testar na conta real (e conferir as métricas, ≤ 1%) e publicar na Vercel.
+**Atualizado:** 2026-10-26
+**Fase atual:** Fases 1 a 9 com código pronto (Fase 9 = Pesquisa de mercado, Parte 1). Faltam ações do usuário: testar na conta real (métricas ≤ 1% e uma pesquisa de mercado) e publicar na Vercel. A Parte 2 (F7, criar campanha a partir da pesquisa) ainda não tem plano.
 
 ## Já feito
 - ✔ Os 6 docs. Mudanças aprovadas: SQLite no lugar de PostgreSQL/Docker e Node 24.
@@ -53,7 +53,15 @@
   - As telas foram para o grupo `src/app/(app)/`. O layout raiz é só a casca, para o login não carregar dados da conta.
   - Postgres: `scripts/gerar-schema-postgres.mjs` → `prisma/postgres/schema.prisma` + `migrations/0_inicial`. `vercel-build` verifica, gera, roda o `migrate deploy` e o build. `maxDuration = 60` nas rotas lentas.
   - Teste de fumaça em produção: redireciona para o login, 401 na API, cookie forjado recusado, 503 sem senha.
-- ✔ 267 testes de unidade/integração + 2 e2e passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
+- ✔ **Fase 9, Pesquisa de mercado (Parte 1):**
+  - `integracoes/google-ads/planejador.ts`: ideias de palavras (volume, concorrência, faixa de lance). `integracoes/google-ads/segmentacao.ts`: regiões, idiomas e domínio principal da conta (ponto de partida).
+  - `pesquisarNaWeb` no `GeradorDeTexto`, **em duas fases**: pesquisa livre com as ferramentas de web + uma chamada só para estruturar o JSON.
+  - `servicos/esquema-pesquisa-de-mercado.ts` (puro, serve ao navegador) e `servicos/filtros-da-pesquisa.ts`: concorrentes sem o próprio site, marketplaces, IP e domínio inválido; relatórios casados por domínio; recomendações só com texto presente nos volumes e que ainda não é palavra da conta.
+  - `servicos/pesquisa-de-mercado.ts`: 4 etapas (CONCORRENTES, SITES, VOLUMES, RECOMENDACAO), uma chamada por etapa, tabela `PesquisaMercado` com **trava que expira** (6 min). Sem acesso Básico, os volumes ficam indisponíveis e a pesquisa segue sem eles.
+  - Rotas `POST /api/pesquisa` e `POST /api/pesquisa/[id]/etapa`; tela `/pesquisa` (menu "Pesquisa"): PainelDePesquisa, CartaoConcorrente, TabelaDePalavrasRecomendadas e CSV no formato do Google Ads Editor. Custo mostrado na tela (US$ 0,30 a 1,00).
+  - Demonstração: 3 respostas novas em `RESPOSTAS_DA_IA_DE_DEMONSTRACAO` (concorrentes com o próprio site para provar o filtro, relatórios, recomendação). O gerador escolhe pelo `safeParse`, então cada resposta só pode passar no esquema certo; `fabrica.test.ts` prova isso para os 5 esquemas. E2e ganhou o passo da pesquisa.
+  - Lições: o `google-gax` devolve **lista** nas respostas paginadas; `parse()` do SDK não é seguro junto com as ferramentas de web (por isso as duas fases); o servidor de dev trava a DLL do Prisma, então pare-o antes de `migrate` e `build`.
+- ✔ mais de 360 testes de unidade/integração + 2 e2e passando (banco de teste isolado em `prisma/teste.db`, Google falso em `testes/apoio/google-falso.ts`); typecheck, lint e build ok; teste de fumaça das rotas GET ok.
 
 ## Notas técnicas
 - npm 11: install scripts aprovados em `allowScripts`. Pacote novo com script: `npm approve-scripts <pacote>`.
@@ -67,4 +75,4 @@
 - Publicação online (PRD § 4.1, Fase 8): **não publicar sem o login do app**. SQLite não roda na Vercel; é preciso Postgres (ex.: Neon).
 
 ## Parou em
-O código do MVP e da publicação está completo. Próximos passos dependem do usuário: (1) ver o app com `npm run demo`; (2) preencher o `.env` e testar na conta real, comparando custo, cliques e conversões com o Google Ads (critério ≤ 1%, tarefa da Fase 7); (3) publicar na Vercel (README) e informar o domínio. Se ele pedir algo novo, passar pelo agente `produto` (PRD) antes de codar; candidatos estão em "Desejáveis" no PRD (aplicar mudanças via API, alertas por e-mail, relatório PDF).
+A Parte 1 da pesquisa de mercado está completa (código, demonstração, e2e e README). Próximos passos: (1) ver com `npm run demo` em `/pesquisa`; (2) com `ANTHROPIC_API_KEY` e acesso Básico, rodar uma pesquisa real e conferir concorrentes, volumes e o CSV; (3) testar a conta real e publicar na Vercel (README); (4) Parte 2 (F7, criar campanha a partir da pesquisa) precisa de plano próprio, passando antes pelo agente `produto`.

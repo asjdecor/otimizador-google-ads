@@ -1,6 +1,6 @@
 # Tarefas
 
-> Dono: agente `planejador` · Atualizado: 2026-10-15
+> Dono: agente `planejador` · Atualizado: 2026-10-26
 > Status: Pendente / Em andamento / Feita · Cada tarefa cabe em uma sessão e tem resultado verificável.
 
 ## Fase 0 — Pré-requisitos (usuário, fora do código)
@@ -80,3 +80,17 @@
 | PostgreSQL na Vercel: schema gerado + migration `0_inicial` + script `vercel-build` (local/testes seguem em SQLite) | Alta | Feita |
 | Configurar variáveis na hospedagem + redirect OAuth `https://<domínio>/api/auth/google/callback` no Google Cloud | Alta | Pendente |
 | Apontar o domínio (DNS) para a hospedagem e testar ponta a ponta | Média | Pendente |
+
+## Fase 9 — Pesquisa de mercado (F6, Parte 1)
+| Tarefa | Prioridade | Status |
+|---|---|---|
+| Planejador de Palavras-chave na `ApiGoogleAds` (volumes, concorrência e faixa de lance), aceitando a resposta paginada | Alta | Feita |
+| Segmentação (regiões e idiomas) e domínio principal da conta como ponto de partida | Alta | Feita |
+| Pesquisa na web no `GeradorDeTexto` (`pesquisarNaWeb`, em duas fases: pesquisa livre + estruturação) | Alta | Feita |
+| Esquemas e filtros puros da pesquisa (concorrentes, relatórios, recomendações) | Alta | Feita |
+| Banco e serviço de 4 etapas (concorrentes, sites, volumes, recomendação) com trava que expira | Alta | Feita |
+| Rotas da API da pesquisa (`/api/pesquisa`, `/api/pesquisa/[id]/etapa`) | Alta | Feita |
+| Tela `/pesquisa` (item "Pesquisa" no menu): andamento por etapa, cartões de concorrentes, palavras recomendadas e CSV | Alta | Feita |
+| Demonstração, teste e2e e documentos da pesquisa | Média | Feita |
+| Teste manual numa conta real: rodar uma pesquisa e conferir concorrentes, volumes e o CSV (precisa de ANTHROPIC_API_KEY e acesso Básico) | Alta | Pendente |
+| Parte 2 (F7): criar campanha a partir da pesquisa — plano próprio | Alta | Pendente |

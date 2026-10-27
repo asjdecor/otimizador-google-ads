@@ -2,7 +2,7 @@
 
 App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra onde a verba está sendo desperdiçada, dá nota de 0 a 100 a cada anúncio e gera títulos e descrições melhores com IA (Claude).
 
-> **Status:** em desenvolvimento. Fases 1–7 prontas (base, conexão, painel, nota e diagnóstico, sugestões com IA, palavras-chave, teste e2e) + login e suporte à Vercel. Veja [docs/tarefas.md](docs/tarefas.md).
+> **Status:** em desenvolvimento. Fases 1–7 e 9 prontas (base, conexão, painel, nota e diagnóstico, sugestões com IA, palavras-chave, teste e2e, pesquisa de mercado) + login e suporte à Vercel. Veja [docs/tarefas.md](docs/tarefas.md).
 > **Segurança:** online, o app exige senha (variáveis `APP_SENHA_HASH` e `APP_SESSAO_SEGREDO`). Sem elas, ele se bloqueia sozinho.
 
 ## O que ele faz
@@ -11,6 +11,7 @@ App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra 
 - **Anúncios:** nota 0–100 por regras explicadas (limite de caracteres, palavra-chave no título, chamada para ação, títulos repetidos, quantidade de variações, força do anúncio) com "como corrigir".
 - **Sugestões com IA:** até 15 títulos e 4 descrições novos por anúncio, sempre dentro de 30/90 caracteres, com histórico e custo estimado.
 - **Palavras-chave:** termos de pesquisa, negativas sugeridas (por regra e por IA, com motivo), novas palavras-chave e exportação em CSV para o Google Ads Editor.
+- **Pesquisa de mercado:** descobre concorrentes, lê o que mostram ao público e recomenda palavras-chave (veja abaixo).
 - **Nada é alterado no Google Ads** — o app só lê e sugere.
 
 ## Como rodar
@@ -47,6 +48,21 @@ Chaves necessárias no `.env`:
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google Cloud → APIs e serviços → Credenciais (OAuth, app da Web). Redirect: `http://localhost:3000/api/auth/google/callback` |
 | `GOOGLE_ADS_DEVELOPER_TOKEN` | Google Ads (conta MCC) → Ferramentas → Central de API. Peça acesso **Básico** para ler contas reais |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys (Fase 5) |
+
+## Pesquisa de mercado
+
+Menu **Pesquisa** (`/pesquisa`). A partir do site, das palavras e das regiões da conta selecionada, o app:
+
+1. busca concorrentes na web;
+2. lê o site de cada um (o que vende, promessas, preços, diferenciais, pontos fracos e as fontes);
+3. consulta volumes de busca, concorrência e faixa de lance no Planejador de Palavras-chave do Google;
+4. recomenda palavras-chave e negativas, que você marca e exporta em CSV para o Google Ads Editor.
+
+- **Custo:** cerca de US$ 0,30 a US$ 1,00 por pesquisa, cobrado na sua conta da Anthropic. O valor aparece na tela.
+- **Precisa de** `ANTHROPIC_API_KEY`. Os volumes exigem o developer token com acesso **Básico**; sem ele, a pesquisa funciona, só que sem volumes.
+- **Busca na web:** se a Anthropic recusar a pesquisa, habilite a busca na web no Console (*Settings → Privacy*).
+- **Limite honesto:** a pesquisa mostra só o que é público (sites e resultados de busca). Ninguém vê as palavras-chave nem os lances que um concorrente compra.
+- Nada é alterado no Google Ads. Para ver sem chaves: `npm run demo` e abra `/pesquisa`.
 
 ## Publicar na Vercel
 

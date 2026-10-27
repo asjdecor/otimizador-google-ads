@@ -7,6 +7,9 @@ import { mapearLinhasDeAnuncioRsa, GAQL_ANUNCIOS_RSA, GAQL_PALAVRAS_DOS_GRUPOS, 
 import { modoDemonstracaoAtivo } from "@/api/integracoes/fabrica";
 import { ID_MCC_DEMO, RESPOSTAS_DA_IA_DE_DEMONSTRACAO, responderConsultaDeDemonstracao } from "@/api/integracoes/demonstracao/dados";
 import type { GeradorDeTexto } from "@/api/integracoes/claude/cliente";
+import { esquemaRespostaDeAnalise } from "@/api/servicos/analise-de-termos";
+import { esquemaRespostaConcorrentes, esquemaRespostaRecomendacao, esquemaRespostaSites } from "@/api/servicos/esquema-pesquisa-de-mercado";
+import { esquemaRespostaDeSugestoes } from "@/api/servicos/sugestoes";
 
 describe("modoDemonstracaoAtivo (trava de segurança)", () => {
   it("só liga com APP_DADOS_FALSOS=1 fora de produção", () => {
@@ -56,6 +59,30 @@ describe("dados de demonstração passam pelos mesmos mapeadores do app real", (
     const termos = mapearLinhasDeTermo(responderConsultaDeDemonstracao("FROM search_term_view"));
     const analise = await analisarTermosComIa(gerador, { termos, palavrasPorGrupo: { "10": ["sofá retrátil"] } });
     expect(analise.negativas.map((n) => n.termo)).toEqual(["sofá grátis doação", "conserto de sofá"]);
+  });
+});
+
+describe("cada esquema recebe exatamente uma resposta de demonstração (a certa)", () => {
+  const esquemas = [
+    { nome: "sugestões", esquema: esquemaRespostaDeSugestoes, indice: 0 },
+    { nome: "análise de termos", esquema: esquemaRespostaDeAnalise, indice: 1 },
+    { nome: "concorrentes", esquema: esquemaRespostaConcorrentes, indice: 2 },
+    { nome: "relatórios dos sites", esquema: esquemaRespostaSites, indice: 3 },
+    { nome: "recomendação", esquema: esquemaRespostaRecomendacao, indice: 4 },
+  ];
+
+  for (const { nome, esquema, indice } of esquemas) {
+    it(`${nome}: só a resposta ${indice} passa`, () => {
+      const quePassam = RESPOSTAS_DA_IA_DE_DEMONSTRACAO.map((r, i) => (esquema.safeParse(r).success ? i : -1)).filter((i) => i >= 0);
+      expect(quePassam).toEqual([indice]);
+    });
+  }
+
+  it("a demonstração tem 3 concorrentes .example, um deles o próprio site", () => {
+    const { concorrentes } = esquemaRespostaConcorrentes.parse(RESPOSTAS_DA_IA_DE_DEMONSTRACAO[2]);
+    expect(concorrentes).toHaveLength(3);
+    expect(concorrentes.every((c) => c.site.includes(".example"))).toBe(true);
+    expect(concorrentes.some((c) => c.site.includes("sofas-demo.example"))).toBe(true);
   });
 });
 
