@@ -1,6 +1,6 @@
 # PRD — Otimizador de Anúncios Google Ads
 
-> Dono: agente `produto` · Atualizado: 2026-10-15
+> Dono: agente `produto` · Atualizado: 2026-10-26
 
 ## 1. Visão
 Um app pessoal que se conecta à conta do Google Ads, mostra onde a verba está sendo desperdiçada, dá nota a cada anúncio e gera, com IA (Claude), versões melhores de títulos, descrições e palavras-chave, prontas para copiar para o Google Ads.
@@ -61,6 +61,22 @@ O usuário quer o app acessível num endereço web com domínio próprio. Condi�
 - P3. O login do Google volta para o domínio publicado (redirect OAuth atualizado).
 - P4. As chaves ficam só nas variáveis de ambiente da hospedagem, nunca no repositório (que é público).
 
+## 4.2 Pesquisa de mercado e campanhas (pedido do usuário em 2026-10-26)
+Muda a regra do MVP só nesta funcionalidade: o app **pode criar campanhas e definir orçamento**, sempre depois de uma tela de revisão e de um clique do usuário em "Publicar". Design: `docs/superpowers/specs/2026-10-26-pesquisa-e-campanhas-design.md`.
+
+### F6. Pesquisa de mercado
+- F6.1 O usuário consegue iniciar uma pesquisa que descobre sozinha, pela web, de 3 a 8 concorrentes na região das campanhas da conta.
+- F6.2 O usuário consegue ver um relatório por concorrente (o que vende, promessas, preços públicos, diferenciais, pontos fracos) com os links das fontes.
+- F6.3 O usuário consegue ver palavras-chave recomendadas que a conta ainda não usa, com volume de buscas, concorrência e faixa de lance do Planejador de Palavras-chave do Google, e o motivo de cada uma.
+- F6.4 O usuário consegue ver negativas sugeridas e exportar palavras e negativas em CSV.
+- F6.5 O usuário vê o custo estimado antes e o custo real depois de cada pesquisa.
+
+### F7. Criar campanha a partir da pesquisa
+- F7.1 O usuário consegue informar um orçamento por dia (R$) e receber uma campanha de Pesquisa montada com as palavras escolhidas: 1 a 3 grupos, 1 anúncio RSA por grupo e negativas.
+- F7.2 Antes de publicar, o usuário vê uma tela de revisão com tudo o que vai subir, o gasto máximo estimado no mês e os problemas apontados pelo ensaio do Google.
+- F7.3 A campanha só é publicada (ativa) com um clique em "Publicar". Nunca acima dos tetos de orçamento das Configurações. Sem tetos configurados, não publica.
+- F7.4 O usuário consegue pausar e reativar as campanhas criadas pelo app e ver a situação de aprovação.
+
 ## 5. Desejáveis (fase 2, fora do MVP)
 - Aplicar sugestões direto na conta pela API: criar anúncio, adicionar negativas, pausar palavra-chave, sempre com confirmação.
 - Testes A/B acompanhados (sugestão aplicada vs. original, comparação de CTR depois de N dias).
@@ -70,8 +86,8 @@ O usuário quer o app acessível num endereço web com domínio próprio. Condi�
 
 ## 6. Fora do escopo
 - Múltiplos usuários, cadastro, planos ou pagamento (não é um SaaS).
-- Criar campanhas do zero.
-- Gestão de lances e orçamento.
+- Criar campanhas do zero fora do fluxo da F7 (Performance Max, Display, campanhas montadas à mão).
+- Gestão contínua de lances e orçamento (ajustes automáticos). Só o orçamento inicial da F7 é definido pelo app.
 - Outras plataformas (Meta Ads, TikTok, Microsoft Ads).
 - App mobile nativo (a versão web deve funcionar no celular).
 
