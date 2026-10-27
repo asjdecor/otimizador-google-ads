@@ -1,3 +1,4 @@
+import type { NegativaSugerida, PalavraRecomendada } from "./esquema-pesquisa-de-mercado";
 import type { Correspondencia, SugestaoDeNegativa, SugestaoDePalavraNova } from "./termos";
 
 /**
@@ -27,6 +28,17 @@ export function montarCsvDeNegativas(negativas: SugestaoDeNegativa[]): string {
   return montarCsv(
     ["Campaign", "Ad group", "Keyword", "Criterion Type"],
     negativas.map((n) => [n.campanhaNome, n.grupoNome, n.termo, TIPO_NEGATIVA[n.correspondencia]]),
+  );
+}
+
+/** Pesquisa de mercado: palavras e negativas recomendadas, sem campanha nem grupo (quem importa escolhe no Editor). */
+export function montarCsvDeRecomendadas(palavras: PalavraRecomendada[], negativas: NegativaSugerida[]): string {
+  return montarCsv(
+    ["Campaign", "Ad group", "Keyword", "Criterion Type"],
+    [
+      ...palavras.map((p) => ["", "", p.texto, TIPO_POSITIVA[p.correspondencia]]),
+      ...negativas.map((n) => ["", "", n.termo, TIPO_NEGATIVA.Exata]),
+    ],
   );
 }
 

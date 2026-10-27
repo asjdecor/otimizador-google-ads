@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mapearLinhasDeTermo, montarGaqlDeTermos } from "@/api/integracoes/google-ads/termos";
-import { escaparCelulaCsv, montarCsv, montarCsvDeNegativas, montarCsvDePalavrasNovas } from "@/api/servicos/csv";
+import { escaparCelulaCsv, montarCsv, montarCsvDeNegativas, montarCsvDePalavrasNovas, montarCsvDeRecomendadas } from "@/api/servicos/csv";
 import {
   MAXIMO_DE_SUGESTOES,
   somarGastoDeTermosSemConversao,
@@ -109,5 +109,28 @@ describe("CSV (F5.4)", () => {
     );
     const [nova] = sugerirPalavrasNovasPorRegra([termo({ termo: "sofá cama", conversoes: 1 })], {});
     expect(montarCsvDePalavrasNovas(nova ? [nova] : [])).toContain("Pesquisa,Sofás,sofá cama,Phrase");
+  });
+});
+
+describe("montarCsvDeRecomendadas (pesquisa de mercado)", () => {
+  const base = { motivo: "m", volumeMensal: null, concorrencia: "BAIXA" as const, lanceBaixo: null, lanceAlto: null };
+
+  it("usa o formato do Editor com Campaign e Ad group vazios", () => {
+    const csv = montarCsvDeRecomendadas(
+      [
+        { ...base, texto: "sofá retrátil", correspondencia: "Exata" },
+        { ...base, texto: "sofá cama", correspondencia: "Frase" },
+      ],
+      [{ termo: "grátis", motivo: "x" }],
+    );
+    expect(csv).toBe(
+      ["﻿Campaign,Ad group,Keyword,Criterion Type", ",,sofá retrátil,Exact", ",,sofá cama,Phrase", ",,grátis,Negative exact"].join(String.fromCharCode(13, 10)),
+    );
+  });
+
+  it.each(["=cmd", "+1", "-2", "@x"])("protege %s no começo contra fórmula", (texto) => {
+    const csv = montarCsvDeRecomendadas([{ ...base, texto, correspondencia: "Exata" }], [{ termo: texto, motivo: "" }]);
+    expect(csv).toContain(`,,'${texto},Exact`);
+    expect(csv).toContain(`,,'${texto},Negative exact`);
   });
 });
