@@ -2,7 +2,8 @@ import type { PesquisaMercado, PrismaClient } from "@prisma/client";
 import { prisma } from "@/api/banco/prisma";
 import { ErroParaUsuario } from "@/api/erro-para-usuario";
 import type { ContextoDaConta } from "@/api/http/contexto-da-conta";
-import { estimarCustoEmDolares, type GeradorDeTexto } from "@/api/integracoes/claude/cliente";
+import { estimarCustoEmDolares, lerGastoDoErro, type GeradorDeTexto } from "@/api/integracoes/claude/cliente";
+import { buscarPalavrasPorGrupo } from "@/api/integracoes/google-ads/anuncios";
 import type { ApiGoogleAds, CredenciaisDeConsulta } from "@/api/integracoes/google-ads/api-google-ads";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { buscarMetricasDePalavrasChave } from "@/api/integracoes/google-ads/metricas";
@@ -39,6 +40,11 @@ const IDEIAS_ENVIADAS = 300;
 const MAXIMO_IDEIAS_SALVAS = 1000;
 /** Depois disso a trava de uma etapa é considerada abandonada (a função morreu sem soltá-la). */
 export const TEMPO_MAXIMO_DA_TRAVA_MS = 6 * 60 * 1000;
+/**
+ * Prazo de cada chamada de IA de uma etapa: abaixo do limite da função na Vercel (300 s), para o erro
+ * ser gravado, a trava solta e o custo somado antes de a função ser encerrada.
+ */
+export const PRAZO_DA_ETAPA_MS = 240_000;
 const ERRO_DE_ORDEM = "Esta etapa já foi feita ou ainda não pode ser feita. Recarregue a página.";
 const GEO_BRASIL = "2076";
 const IDIOMA_PORTUGUES = "1014";
@@ -91,7 +97,7 @@ export async function montarPontoDePartida(conta: ContextoProntoDaConta): Promis
 
 // ---------- etapas ----------
 
-/** Custo gasto com a IA na etapa (somado só quando a chamada voltou). */
+/** Custo gasto com a IA na etapa (somado quando a chamada voltou ou pelo gasto preso ao erro). */
 type Gasto = { dolares: number };
 type Campos = Partial<Pick<PesquisaMercado, "concorrentesJson" | "sitesJson" | "volumesJson" | "recomendacaoJson">>;
 
@@ -125,6 +131,7 @@ async function etapaConcorrentes(gerador: GeradorDeTexto, ponto: PontoDePartida,
     esquema: esquemaRespostaConcorrentes,
     maxBuscas: 8,
     maxLeituras: 0,
+    prazoMs: PRAZO_DA_ETAPA_MS,
   });
   somarCusto(gasto, resposta);
   const concorrentes = filtrarConcorrentes(resposta.dados, ponto.dominio);
@@ -141,6 +148,8 @@ async function etapaSites(gerador: GeradorDeTexto, concorrentes: Concorrente[], 
     esquema: esquemaRespostaSites,
     maxBuscas: 0,
     maxLeituras: concorrentes.length * 2,
+    dominiosPermitidos: concorrentes.map((c) => c.dominio),
+    prazoMs: PRAZO_DA_ETAPA_MS,
   });
   somarCusto(gasto, resposta);
   return { sitesJson: JSON.stringify(filtrarRelatorios(resposta.dados, concorrentes)) };
@@ -176,7 +185,24 @@ async function etapaVolumes(api: ApiGoogleAds, credenciais: CredenciaisDeConsult
   return { volumesJson: JSON.stringify(volumes) };
 }
 
-async function etapaRecomendacao(gerador: GeradorDeTexto, ponto: PontoDePartida, relatorios: RelatorioDeConcorrente[], volumes: Volumes, gasto: Gasto): Promise<Campos> {
+/** Todas as palavras-chave da conta (não só as 20 do ponto de partida), para não recomendar o que já existe. */
+async function lerPalavrasDaConta(api: ApiGoogleAds, credenciais: CredenciaisDeConsulta): Promise<string[]> {
+  try {
+    return Object.values(await buscarPalavrasPorGrupo(api, credenciais)).flat();
+  } catch (erro) {
+    throw new ErroParaUsuario(traduzirErroGoogleAds(erro));
+  }
+}
+
+async function etapaRecomendacao(
+  { gerador, api, credenciais }: DependenciasDaPesquisa,
+  ponto: PontoDePartida,
+  relatorios: RelatorioDeConcorrente[],
+  volumes: Volumes,
+  gasto: Gasto,
+): Promise<Campos> {
+  // Antes da IA: se o Google falhar, a etapa falha sem gastar com a IA.
+  const palavrasDaConta = await lerPalavrasDaConta(api, credenciais);
   const partes = [blocoDoPontoDePartida(ponto), "<palavras_atuais>", listaSegura(ponto.palavras, ", ") || "(nenhuma)", "</palavras_atuais>"];
   if (volumes.disponivel) {
     const ideias = volumes.ideias.slice(0, IDEIAS_ENVIADAS);
@@ -190,9 +216,14 @@ async function etapaRecomendacao(gerador: GeradorDeTexto, ponto: PontoDePartida,
       "</relatorios_dos_concorrentes>",
     );
   }
-  const resposta = await gerador.gerarJson({ sistema: PROMPT_RECOMENDACAO, mensagem: partes.join("\n"), esquema: esquemaRespostaRecomendacao });
+  const resposta = await gerador.gerarJson({
+    sistema: PROMPT_RECOMENDACAO,
+    mensagem: partes.join("\n"),
+    esquema: esquemaRespostaRecomendacao,
+    prazoMs: PRAZO_DA_ETAPA_MS,
+  });
   somarCusto(gasto, resposta);
-  return { recomendacaoJson: JSON.stringify(filtrarRecomendacoes(resposta.dados, volumes, ponto.palavras)) };
+  return { recomendacaoJson: JSON.stringify(filtrarRecomendacoes(resposta.dados, volumes, [...ponto.palavras, ...palavrasDaConta])) };
 }
 
 function exigir<T>(valor: T | null): T {
@@ -235,7 +266,7 @@ export async function executarEtapa(
     else if (etapaPedida === "SITES") campos = await etapaSites(gerador, exigir(pesquisa.concorrentes), gasto);
     else if (etapaPedida === "VOLUMES") campos = await etapaVolumes(api, credenciais, pesquisa.pontoDePartida, exigir(pesquisa.concorrentes));
     else if (etapaPedida === "RECOMENDACAO") {
-      campos = await etapaRecomendacao(gerador, pesquisa.pontoDePartida, pesquisa.relatorios ?? [], exigir(pesquisa.volumes), gasto);
+      campos = await etapaRecomendacao(dependencias, pesquisa.pontoDePartida, pesquisa.relatorios ?? [], exigir(pesquisa.volumes), gasto);
     } else throw new ErroParaUsuario(ERRO_DE_ORDEM);
 
     const salva = await banco.pesquisaMercado.update({
@@ -245,6 +276,9 @@ export async function executarEtapa(
     travaSolta = true;
     return converterLinhaEmPesquisa(salva);
   } catch (erro) {
+    // Chamadas de IA que terminaram antes do erro (ex.: prazo estourado na fase B) também custam.
+    const gastoParcial = lerGastoDoErro(erro);
+    if (gastoParcial) somarCusto(gasto, gastoParcial);
     const mensagem = erro instanceof ErroParaUsuario ? erro.message : etapaPedida === "VOLUMES" ? traduzirErroGoogleAds(erro) : ERRO_DESCONHECIDO;
     const salva = await banco.pesquisaMercado.update({
       where: { id: pesquisaId },

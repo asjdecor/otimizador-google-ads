@@ -1,7 +1,8 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/api/banco/prisma";
 import { ErroParaUsuario } from "@/api/erro-para-usuario";
-import type { GeradorDeTexto } from "@/api/integracoes/claude/cliente";
+import { anexarGastoAoErro, type GeradorDeTexto } from "@/api/integracoes/claude/cliente";
+import { GAQL_PALAVRAS_DOS_GRUPOS } from "@/api/integracoes/google-ads/anuncios";
 import type { ApiGoogleAds, CredenciaisDeConsulta } from "@/api/integracoes/google-ads/api-google-ads";
 import type { PedidoDeIdeias } from "@/api/integracoes/google-ads/planejador";
 import type { Etapa, PontoDePartida } from "@/api/servicos/esquema-pesquisa-de-mercado";
@@ -11,6 +12,7 @@ import {
   lerPesquisa,
   lerUltimaPesquisa,
   montarPontoDePartida,
+  PRAZO_DA_ETAPA_MS,
   semMarcacoes,
   TEMPO_MAXIMO_DA_TRAVA_MS,
   type ContextoProntoDaConta,
@@ -326,6 +328,76 @@ describe("pesquisa de mercado em etapas", () => {
     expect(ideias).toHaveLength(1000);
     expect(ideias[0]?.texto).toBe("ideia 1099");
     expect(ideias.at(-1)?.texto).toBe("ideia 100");
+  });
+
+  /** Leva uma pesquisa até a etapa RECOMENDACAO, com volumes do Planejador. */
+  async function ateRecomendacao(api: ApiGoogleAds) {
+    const { gerador } = criarGeradorFalso([respostaConcorrentes, respostaSites]);
+    const pesquisa = await iniciarPesquisa("111", ponto);
+    for (const etapa of ["CONCORRENTES", "SITES", "VOLUMES"] as const) await executarEtapa({ gerador, api, credenciais }, pesquisa.id, etapa);
+    return pesquisa;
+  }
+
+  it("não recomenda palavra que a conta já usa, mesmo fora das 20 de maior custo", async () => {
+    const palavraDaConta = (texto: string) => ({ ad_group: { id: 9 }, ad_group_criterion: { keyword: { text: texto } } });
+    const { api } = criarApi({
+      linhas: (gaql) => (gaql === GAQL_PALAVRAS_DOS_GRUPOS ? [palavraDaConta("palavra 21"), palavraDaConta("Sofa Cama Casal")] : []),
+    });
+    const pesquisa = await ateRecomendacao(api);
+    const { gerador, mensagens } = criarGeradorFalso([respostaRecomendacao]);
+    const final = await executarEtapa({ gerador, api, credenciais }, pesquisa.id, "RECOMENDACAO");
+    expect(final.etapa).toBe("CONCLUIDA");
+    expect(final.recomendadas?.map((p) => p.texto)).toEqual(["Sofá Retrátil Barato"]);
+    // As palavras atuais do prompt continuam sendo só as do ponto de partida.
+    expect(mensagens[0]).not.toContain("palavra 21");
+  });
+
+  it("falha do Google ao ler as palavras da conta vira erro da etapa de recomendação", async () => {
+    let falhar = false;
+    const { api } = criarApi({
+      linhas: (gaql) => {
+        if (falhar && gaql === GAQL_PALAVRAS_DOS_GRUPOS) throw new Error("USER_PERMISSION_DENIED");
+        return [];
+      },
+    });
+    const pesquisa = await ateRecomendacao(api);
+    falhar = true;
+    const { gerador } = criarGeradorFalso([respostaRecomendacao]);
+    const resultado = await executarEtapa({ gerador, api, credenciais }, pesquisa.id, "RECOMENDACAO");
+    expect(resultado.etapa).toBe("RECOMENDACAO");
+    expect(resultado.erroEtapa).toBe("Sua conta Google não tem permissão nessa conta de anúncios (ou falta passar pela MCC certa).");
+    const linha = await prisma.pesquisaMercado.findUniqueOrThrow({ where: { id: pesquisa.id } });
+    expect(linha.emExecucao).toBe(false);
+  });
+
+  it("cada etapa da IA tem o prazo de 240 s e a leitura dos sites fica nos domínios dos concorrentes", async () => {
+    expect(PRAZO_DA_ETAPA_MS).toBe(240_000);
+    const { api } = criarApi();
+    const { gerador, pesquisas, pedidosJson } = criarGeradorFalso([respostaConcorrentes, respostaSites, respostaRecomendacao]);
+    const deps = { gerador, api, credenciais };
+    const pesquisa = await iniciarPesquisa("111", ponto);
+    for (const etapa of ["CONCORRENTES", "SITES", "VOLUMES", "RECOMENDACAO"] as const) await executarEtapa(deps, pesquisa.id, etapa);
+    expect(pesquisas.map((p) => p.prazoMs)).toEqual([PRAZO_DA_ETAPA_MS, PRAZO_DA_ETAPA_MS]);
+    expect(pesquisas[0]?.dominiosPermitidos).toBeUndefined();
+    expect(pesquisas[1]?.dominiosPermitidos).toEqual(["sofasrivais.com.br", "casaboa.com.br"]);
+    expect(pedidosJson.map((p) => p.prazoMs)).toEqual([PRAZO_DA_ETAPA_MS]);
+  });
+
+  it("prazo estourado: guarda o erro, solta a trava e soma o custo do que a IA já gastou", async () => {
+    const { api } = criarApi();
+    const erro = anexarGastoAoErro(new ErroParaUsuario("A pesquisa demorou demais. Tente esta etapa de novo."), {
+      modelo: "claude-opus-5-5",
+      tokensEntrada: 1_000_000,
+      tokensSaida: 0,
+      buscasNaWeb: 5,
+    });
+    const pesquisa = await iniciarPesquisa("111", ponto);
+    const resultado = await executarEtapa({ gerador: geradorQueFalha(erro), api, credenciais }, pesquisa.id, "CONCORRENTES");
+    expect(resultado.etapa).toBe("CONCORRENTES");
+    expect(resultado.erroEtapa).toBe("A pesquisa demorou demais. Tente esta etapa de novo.");
+    expect(resultado.custoDolares).toBeCloseTo(4 + 0.05, 6);
+    const linha = await prisma.pesquisaMercado.findUniqueOrThrow({ where: { id: pesquisa.id } });
+    expect(linha).toMatchObject({ emExecucao: false, execucaoIniciadaEm: null });
   });
 
   it("tira < e > do texto externo antes de pôr nas marcações", async () => {

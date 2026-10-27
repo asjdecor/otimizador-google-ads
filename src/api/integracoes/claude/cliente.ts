@@ -18,14 +18,29 @@ export interface RespostaDePesquisa<T> extends RespostaJson<T> {
   buscasNaWeb: number;
 }
 
-export interface PedidoDePesquisa<T> {
+export interface PedidoJson<T> {
   sistema: string;
   mensagem: string;
   esquema: z.ZodType<T>;
+  /** Tempo total (ms) para a resposta; estourado, lança ErroParaUsuario com MENSAGEM_PRAZO_ESTOURADO. */
+  prazoMs?: number;
+}
+
+export interface PedidoDePesquisa<T> extends PedidoJson<T> {
   /** Máximo de buscas na web; 0 não oferece a ferramenta de busca. */
   maxBuscas: number;
   /** Máximo de páginas lidas; 0 não oferece a ferramenta de leitura. */
   maxLeituras: number;
+  /** Se informado, a leitura de páginas fica restrita a estes domínios. */
+  dominiosPermitidos?: string[];
+}
+
+/** Uso da IA em chamadas que terminaram antes de um erro (para o custo não se perder). */
+export interface GastoDaIa {
+  modelo: string;
+  tokensEntrada: number;
+  tokensSaida: number;
+  buscasNaWeb: number;
 }
 
 /**
@@ -33,8 +48,11 @@ export interface PedidoDePesquisa<T> {
  * então os testes usam uma versão falsa e nunca gastam créditos.
  */
 export interface GeradorDeTexto {
-  gerarJson<T>(pedido: { sistema: string; mensagem: string; esquema: z.ZodType<T> }): Promise<RespostaJson<T>>;
-  /** Como `gerarJson`, mas o Claude pode buscar e ler páginas na web antes de responder. */
+  gerarJson<T>(pedido: PedidoJson<T>): Promise<RespostaJson<T>>;
+  /**
+   * Como `gerarJson`, mas o Claude pode buscar e ler páginas na web antes de responder.
+   * Se falhar depois de alguma chamada concluída, o erro leva o gasto feito (veja `lerGastoDoErro`).
+   */
   pesquisarNaWeb<T>(pedido: PedidoDePesquisa<T>): Promise<RespostaDePesquisa<T>>;
 }
 
@@ -47,6 +65,54 @@ export interface RespostaBrutaDoClaude<T> {
 }
 
 const MENSAGEM_FORMATO_INESPERADO = "A IA respondeu num formato inesperado. Tente de novo.";
+export const MENSAGEM_PRAZO_ESTOURADO = "A pesquisa demorou demais. Tente esta etapa de novo.";
+
+const CHAVE_DO_GASTO = Symbol("gastoDaIa");
+
+/** Prende ao erro o gasto das chamadas que já tinham terminado. Devolve o próprio erro. */
+export function anexarGastoAoErro<E extends Error>(erro: E, gasto: GastoDaIa): E {
+  Object.defineProperty(erro, CHAVE_DO_GASTO, { value: gasto, enumerable: false, configurable: true });
+  return erro;
+}
+
+/** Gasto preso ao erro por `pesquisarNaWeb`, ou null se não houve chamada concluída. */
+export function lerGastoDoErro(erro: unknown): GastoDaIa | null {
+  if (!(erro instanceof Error)) return null;
+  return (erro as Error & { [CHAVE_DO_GASTO]?: GastoDaIa })[CHAVE_DO_GASTO] ?? null;
+}
+
+/** Prazo total de um pedido: cada chamada ao SDK recebe o tempo que resta e o mesmo sinal de cancelamento. */
+interface Prazo {
+  /** Opções da próxima chamada; lança o erro de prazo se o tempo já acabou. */
+  opcoes(): { timeout: number; signal: AbortSignal };
+  expirou(): boolean;
+  encerrar(): void;
+}
+
+function criarPrazo(prazoMs: number | undefined): Prazo | null {
+  if (prazoMs === undefined) return null;
+  const limite = Date.now() + prazoMs;
+  const controle = new AbortController();
+  const relogio = setTimeout(() => controle.abort(), prazoMs);
+  const expirou = () => controle.signal.aborted || Date.now() >= limite;
+  return {
+    opcoes() {
+      if (expirou()) throw new ErroParaUsuario(MENSAGEM_PRAZO_ESTOURADO);
+      return { timeout: limite - Date.now(), signal: controle.signal };
+    },
+    expirou,
+    encerrar: () => clearTimeout(relogio),
+  };
+}
+
+/** Como `traduzirErroDoClaude`, mas cancelamento ou timeout causado pelo prazo vira a mensagem de prazo. */
+function traduzirErroComPrazo(erro: unknown, prazo: Prazo | null): Error {
+  if (prazo?.expirou() && !(erro instanceof ErroParaUsuario)) return new ErroParaUsuario(MENSAGEM_PRAZO_ESTOURADO);
+  return traduzirErroDoClaude(erro);
+}
+
+/** Tira "<" e ">" do texto da web, para ele não fechar a marcação das anotações. */
+const semMarcacoes = (texto: string) => texto.replace(/[<>]/g, " ");
 
 /** Recusa e resposta cortada valem para qualquer chamada (estruturada ou de pesquisa). */
 function rejeitarParadaRuim(stopReason: string | null): void {
@@ -102,6 +168,9 @@ export function traduzirErroDoClaude(erro: unknown): Error {
   }
   return erro instanceof Error ? erro : new Error(String(erro));
 }
+
+/** Teto (aproximado) de tokens de cada página lida, para uma página enorme não estourar o custo. */
+const MAXIMO_TOKENS_POR_PAGINA = 10_000;
 
 /** Quantas vezes retomamos uma pesquisa que o servidor pausou (`pause_turn`) antes de desistir. */
 const MAX_CONTINUACOES_DA_PESQUISA = 3;
@@ -161,14 +230,17 @@ export function criarGeradorClaude(config: ConfiguracaoClaude, cliente = new Ant
     fallbacks: "default" as const,
   };
 
-  async function gerarJson<T>(pedido: { sistema: string; mensagem: string; esquema: z.ZodType<T> }): Promise<RespostaJson<T>> {
+  async function gerarJsonNoPrazo<T>(pedido: PedidoJson<T>, prazo: Prazo | null): Promise<RespostaJson<T>> {
     try {
-      const resposta = await cliente.beta.messages.parse({
-        ...parametrosComuns,
-        output_config: { effort: "medium", format: betaZodOutputFormat(pedido.esquema) },
-        system: pedido.sistema,
-        messages: [{ role: "user", content: pedido.mensagem }],
-      });
+      const resposta = await cliente.beta.messages.parse(
+        {
+          ...parametrosComuns,
+          output_config: { effort: "medium", format: betaZodOutputFormat(pedido.esquema) },
+          system: pedido.sistema,
+          messages: [{ role: "user", content: pedido.mensagem }],
+        },
+        prazo?.opcoes(),
+      );
       return interpretarRespostaDoClaude<T>({
         model: resposta.model,
         stop_reason: resposta.stop_reason,
@@ -176,71 +248,103 @@ export function criarGeradorClaude(config: ConfiguracaoClaude, cliente = new Ant
         usage: resposta.usage,
       });
     } catch (erro) {
-      throw traduzirErroDoClaude(erro);
+      throw traduzirErroComPrazo(erro, prazo);
     }
   }
 
-  /** Fase A: pesquisa livre (sem formato), retomando as pausas do servidor e acumulando o conteúdo. */
-  async function pesquisarLivremente(pedido: PedidoDePesquisa<unknown>, ferramentas: BetaToolUnion[]) {
+  /**
+   * Fase A: pesquisa livre (sem formato), retomando as pausas do servidor e acumulando o conteúdo.
+   * O uso de cada chamada concluída vai para `gasto`, mesmo que uma chamada seguinte falhe.
+   */
+  async function pesquisarLivremente(pedido: PedidoDePesquisa<unknown>, ferramentas: BetaToolUnion[], prazo: Prazo | null, gasto: GastoDaIa) {
     const mensagemDoUsuario: BetaMessageParam = { role: "user", content: pedido.mensagem };
     const conteudo: BetaContentBlock[] = [];
-    let tokensEntrada = 0;
-    let tokensSaida = 0;
-    let buscasNaWeb = 0;
     try {
       for (let continuacoes = 0; ; continuacoes++) {
         const mensagens: BetaMessageParam[] =
           conteudo.length > 0 ? [mensagemDoUsuario, { role: "assistant", content: [...conteudo] }] : [mensagemDoUsuario];
-        const resposta = await cliente.beta.messages.create({
-          ...parametrosComuns,
-          output_config: { effort: "medium" },
-          system: pedido.sistema,
-          tools: ferramentas,
-          messages: mensagens,
-        });
-        tokensEntrada += resposta.usage.input_tokens;
-        tokensSaida += resposta.usage.output_tokens;
-        buscasNaWeb += resposta.usage.server_tool_use?.web_search_requests ?? 0;
+        const resposta = await cliente.beta.messages.create(
+          {
+            ...parametrosComuns,
+            output_config: { effort: "medium" },
+            system: pedido.sistema,
+            tools: ferramentas,
+            messages: mensagens,
+          },
+          prazo?.opcoes(),
+        );
+        gasto.modelo = resposta.model;
+        gasto.tokensEntrada += resposta.usage.input_tokens;
+        gasto.tokensSaida += resposta.usage.output_tokens;
+        gasto.buscasNaWeb += resposta.usage.server_tool_use?.web_search_requests ?? 0;
         // Uma resposta retomada traz só os blocos novos: somamos tudo para não perder o que veio antes.
         conteudo.push(...resposta.content);
 
         if (resposta.stop_reason !== "pause_turn") {
           rejeitarParadaRuim(resposta.stop_reason);
-          return { anotacoes: montarAnotacoesDaPesquisa(conteudo), tokensEntrada, tokensSaida, buscasNaWeb };
+          return montarAnotacoesDaPesquisa(conteudo);
         }
         if (continuacoes >= MAX_CONTINUACOES_DA_PESQUISA) {
           throw new ErroParaUsuario("A pesquisa na web demorou demais. Tente esta etapa de novo.");
         }
       }
     } catch (erro) {
-      throw traduzirErroDoClaude(erro);
+      throw traduzirErroComPrazo(erro, prazo);
     }
   }
 
   return {
-    gerarJson,
+    async gerarJson<T>(pedido: PedidoJson<T>) {
+      const prazo = criarPrazo(pedido.prazoMs);
+      try {
+        return await gerarJsonNoPrazo(pedido, prazo);
+      } finally {
+        prazo?.encerrar();
+      }
+    },
 
     async pesquisarNaWeb<T>(pedido: PedidoDePesquisa<T>) {
       const ferramentas: BetaToolUnion[] = [];
       if (pedido.maxBuscas > 0) ferramentas.push({ type: "web_search_20260318", name: "web_search", max_uses: pedido.maxBuscas });
-      if (pedido.maxLeituras > 0) ferramentas.push({ type: "web_fetch_20260318", name: "web_fetch", max_uses: pedido.maxLeituras });
+      if (pedido.maxLeituras > 0) {
+        ferramentas.push({
+          type: "web_fetch_20260318",
+          name: "web_fetch",
+          max_uses: pedido.maxLeituras,
+          max_content_tokens: MAXIMO_TOKENS_POR_PAGINA,
+          ...(pedido.dominiosPermitidos ? { allowed_domains: pedido.dominiosPermitidos } : {}),
+        });
+      }
       if (ferramentas.length === 0) throw new Error("pesquisarNaWeb precisa de maxBuscas ou maxLeituras maior que 0.");
 
-      // Duas fases: a saída estruturada não convive bem com busca/citações, então primeiro pesquisamos
-      // em texto livre e depois convertemos as anotações no esquema pedido.
-      const pesquisa = await pesquisarLivremente(pedido, ferramentas);
-      const estruturada = await gerarJson({
-        sistema: `${pedido.sistema}\n\n${INSTRUCAO_DE_ESTRUTURACAO}`,
-        mensagem: `${pedido.mensagem}\n<anotacoes_da_pesquisa>\n${pesquisa.anotacoes}\n</anotacoes_da_pesquisa>`,
-        esquema: pedido.esquema,
-      });
-      return {
-        dados: estruturada.dados,
-        modelo: estruturada.modelo,
-        tokensEntrada: pesquisa.tokensEntrada + estruturada.tokensEntrada,
-        tokensSaida: pesquisa.tokensSaida + estruturada.tokensSaida,
-        buscasNaWeb: pesquisa.buscasNaWeb,
-      };
+      // Um só prazo para as duas fases.
+      const prazo = criarPrazo(pedido.prazoMs);
+      const gasto: GastoDaIa = { modelo: config.modelo, tokensEntrada: 0, tokensSaida: 0, buscasNaWeb: 0 };
+      try {
+        // Duas fases: a saída estruturada não convive bem com busca/citações, então primeiro pesquisamos
+        // em texto livre e depois convertemos as anotações no esquema pedido.
+        const anotacoes = await pesquisarLivremente(pedido, ferramentas, prazo, gasto);
+        const estruturada = await gerarJsonNoPrazo(
+          {
+            sistema: `${pedido.sistema}\n\n${INSTRUCAO_DE_ESTRUTURACAO}`,
+            mensagem: `${pedido.mensagem}\n<anotacoes_da_pesquisa>\n${semMarcacoes(anotacoes)}\n</anotacoes_da_pesquisa>`,
+            esquema: pedido.esquema,
+          },
+          prazo,
+        );
+        return {
+          dados: estruturada.dados,
+          modelo: estruturada.modelo,
+          tokensEntrada: gasto.tokensEntrada + estruturada.tokensEntrada,
+          tokensSaida: gasto.tokensSaida + estruturada.tokensSaida,
+          buscasNaWeb: gasto.buscasNaWeb,
+        };
+      } catch (erro) {
+        const houveGasto = gasto.tokensEntrada + gasto.tokensSaida + gasto.buscasNaWeb > 0;
+        throw houveGasto && erro instanceof Error ? anexarGastoAoErro(erro, { ...gasto }) : erro;
+      } finally {
+        prazo?.encerrar();
+      }
     },
   };
 }

@@ -43,6 +43,11 @@ function ehMarketplace(dominio: string): boolean {
   return MARKETPLACES.some((m) => dominio === m || dominio.endsWith(`.${m}`));
 }
 
+/** O próprio domínio ou um subdomínio dele (blog.loja.com.br para loja.com.br). */
+function ehDoProprio(dominio: string, proprio: string | null): boolean {
+  return proprio !== null && (dominio === proprio || dominio.endsWith(`.${proprio}`));
+}
+
 function limparMotivo(motivo: string): string {
   return motivo.replace(/\s+/g, " ").trim().slice(0, MAXIMO_MOTIVO);
 }
@@ -55,7 +60,7 @@ export function filtrarConcorrentes(resposta: z.infer<typeof esquemaRespostaConc
     if (item.site.includes("@")) continue;
     const dominio = normalizarDominio(item.site);
     if (!dominio || ENDERECO_IPV4.test(dominio)) continue;
-    if (dominio === proprio || ehMarketplace(dominio) || vistos.has(dominio)) continue;
+    if (ehDoProprio(dominio, proprio) || ehMarketplace(dominio) || vistos.has(dominio)) continue;
     vistos.add(dominio);
     resultado.push({ nome: item.nome.replace(/\s+/g, " ").trim(), dominio, motivo: limparMotivo(item.motivo) });
   }
@@ -73,7 +78,8 @@ export function filtrarRelatorios(resposta: z.infer<typeof esquemaRespostaSites>
     if (!relatorio) {
       return { site: c.dominio, lido: false, oQueVende: "", promessas: [], precos: [], diferenciais: [], pontosFracos: [], fontes: [], dominio: c.dominio };
     }
-    return { ...relatorio, site: c.dominio, dominio: c.dominio, fontes: relatorio.fontes.filter((f) => /^https?:\/\//i.test(f.trim())).map((f) => f.trim()) };
+    const fontes = [...new Set(relatorio.fontes.map((f) => f.trim()).filter((f) => /^https?:\/\//i.test(f)))];
+    return { ...relatorio, site: c.dominio, dominio: c.dominio, fontes };
   });
 }
 
@@ -84,9 +90,10 @@ function textoValido(texto: string): boolean {
 export function filtrarRecomendacoes(
   resposta: z.infer<typeof esquemaRespostaRecomendacao>,
   volumes: Volumes,
-  palavrasAtuais: string[],
+  /** Todas as palavras que a conta já usa (não só as de maior custo). */
+  palavrasDaConta: string[],
 ): { recomendadas: PalavraRecomendada[]; negativas: NegativaSugerida[] } {
-  const jaVistas = new Set(palavrasAtuais.map(normalizarTexto));
+  const jaVistas = new Set(palavrasDaConta.map(normalizarTexto));
   const ideias = volumes.disponivel ? new Map(volumes.ideias.map((i) => [normalizarTexto(i.texto), i])) : null;
 
   const recomendadas: PalavraRecomendada[] = [];
@@ -109,12 +116,13 @@ export function filtrarRecomendacoes(
   }
   if (ideias) recomendadas.sort((a, b) => (b.volumeMensal ?? -1) - (a.volumeMensal ?? -1));
 
-  const termosVistos = new Set<string>();
+  // `jaVistas` tem as palavras da conta e as recomendadas: negativa igual a uma delas bloquearia a própria palavra.
+  const termosVistos = new Set(jaVistas);
   const negativas: NegativaSugerida[] = [];
   for (const item of resposta.negativas) {
     const termo = item.termo.replace(/\s+/g, " ").trim();
     const chave = normalizarTexto(termo);
-    if (!chave || termo.length > MAXIMO_CARACTERES_PALAVRA || termosVistos.has(chave)) continue;
+    if (!chave || !textoValido(termo) || termosVistos.has(chave)) continue;
     termosVistos.add(chave);
     negativas.push({ termo, motivo: limparMotivo(item.motivo) });
   }

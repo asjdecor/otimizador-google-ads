@@ -11,6 +11,14 @@ describe("filtrarConcorrentes", () => {
     expect(r.map((c) => c.dominio)).toEqual(["outra.com.br"]);
   });
 
+  it("remove subdomínios do domínio próprio, mas não domínios parecidos", () => {
+    const r = filtrarConcorrentes(
+      { concorrentes: [concorrente("blog.loja.com.br"), concorrente("https://loja.loja.com.br/x"), concorrente("minhaloja.com.br"), concorrente("outra.com.br")] },
+      "loja.com.br",
+    );
+    expect(r.map((c) => c.dominio)).toEqual(["minhaloja.com.br", "outra.com.br"]);
+  });
+
   it("remove marketplaces e seus subdomínios, mas não domínios parecidos", () => {
     const r = filtrarConcorrentes(
       { concorrentes: [concorrente("lista.mercadolivre.com.br"), concorrente("amazon.com.br"), concorrente("meuamazon.com.br"), concorrente("youtube.com")] },
@@ -66,6 +74,14 @@ describe("filtrarRelatorios", () => {
       concorrentes,
     );
     expect(a?.fontes).toEqual(["https://a.com.br/x", "http://a.com.br"]);
+  });
+
+  it("fontes sem repetição, mantendo a primeira", () => {
+    const [a] = filtrarRelatorios(
+      { relatorios: [relatorio("a.com.br", { fontes: ["https://a.com.br/x", " https://a.com.br/x ", "https://a.com.br/y", "https://a.com.br/x"] })] },
+      concorrentes,
+    );
+    expect(a?.fontes).toEqual(["https://a.com.br/x", "https://a.com.br/y"]);
   });
 });
 
@@ -139,6 +155,32 @@ describe("filtrarRecomendacoes", () => {
       expect(r.negativas).toHaveLength(50);
       expect(r.negativas[0]).toEqual({ termo: "grátis", motivo: "a" });
       expect(r.negativas[1]?.termo).toBe("termo 0");
+    });
+
+    it("descarta negativas com mais de 10 palavras", () => {
+      const r = filtrarRecomendacoes(
+        { palavras: [], negativas: [{ termo: "a b c d e f g h i j k", motivo: "x" }, { termo: "a b c d e f g h i j", motivo: "y" }] },
+        volumes,
+        [],
+      );
+      expect(r.negativas.map((n) => n.termo)).toEqual(["a b c d e f g h i j"]);
+    });
+
+    it("descarta negativas iguais a uma palavra recomendada ou já usada na conta", () => {
+      const r = filtrarRecomendacoes(
+        {
+          palavras: [palavra("Sofá Novo")],
+          negativas: [
+            { termo: "sofa novo", motivo: "a" },
+            { termo: "SOFÁ USADO NA CONTA", motivo: "b" },
+            { termo: "grátis", motivo: "c" },
+          ],
+        },
+        volumes,
+        ["sofá usado na conta"],
+      );
+      expect(r.recomendadas.map((p) => p.texto)).toEqual(["Sofá Novo"]);
+      expect(r.negativas.map((n) => n.termo)).toEqual(["grátis"]);
     });
   });
 });
