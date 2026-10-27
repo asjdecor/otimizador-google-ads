@@ -39,20 +39,24 @@ describe("configuração do Google", () => {
     GOOGLE_CLIENT_ID: "id",
     GOOGLE_CLIENT_SECRET: "seg",
     GOOGLE_REDIRECT_URI: "http://localhost:3000/cb",
-    GOOGLE_ADS_DEVELOPER_TOKEN: "dev",
   };
 
   it("lista os campos vazios (espaços contam como vazio)", () => {
-    expect(listarCamposGoogleFaltando({ ...completo, GOOGLE_CLIENT_ID: " ", GOOGLE_ADS_DEVELOPER_TOKEN: undefined })).toEqual([
+    expect(listarCamposGoogleFaltando({ ...completo, GOOGLE_CLIENT_ID: " ", GOOGLE_REDIRECT_URI: undefined })).toEqual([
       "GOOGLE_CLIENT_ID",
-      "GOOGLE_ADS_DEVELOPER_TOKEN",
+      "GOOGLE_REDIRECT_URI",
     ]);
     expect(listarCamposGoogleFaltando(completo)).toEqual([]);
   });
 
+  it("developer token é opcional (o Google o descontinuou em 09/09/2026)", () => {
+    expect(listarCamposGoogleFaltando({ ...completo, GOOGLE_ADS_DEVELOPER_TOKEN: "" })).toEqual([]);
+    expect(lerConfiguracaoGoogle(completo).developerToken).toBe("");
+    expect(lerConfiguracaoGoogle({ ...completo, GOOGLE_ADS_DEVELOPER_TOKEN: " dev " }).developerToken).toBe("dev");
+  });
+
   it("lerConfiguracaoGoogle diz o que falta", () => {
     expect(() => lerConfiguracaoGoogle({ ...completo, GOOGLE_CLIENT_SECRET: "" })).toThrow("GOOGLE_CLIENT_SECRET");
-    expect(lerConfiguracaoGoogle(completo).developerToken).toBe("dev");
   });
 });
 

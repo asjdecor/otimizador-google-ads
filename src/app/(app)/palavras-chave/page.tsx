@@ -1,4 +1,5 @@
 import { iaConfiguradaNoAmbiente } from "@/api/integracoes/fabrica";
+import { claudeEstaConfigurado, openaiEstaConfigurado } from "@/api/configuracao/ambiente";
 import { carregarContextoDaConta } from "@/api/http/contexto-da-conta";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { lerUltimaAnaliseDeTermos } from "@/api/servicos/analise-de-termos";
@@ -8,6 +9,7 @@ import { Aviso } from "@/componentes/Aviso";
 import { AvisoSemConta } from "@/componentes/AvisoSemConta";
 import { CardMetrica } from "@/componentes/CardMetrica";
 import { PainelAnaliseDeTermos } from "@/componentes/PainelAnaliseDeTermos";
+import { PainelAnalisePremium } from "@/componentes/PainelAnalisePremium";
 import { TabelaDados } from "@/componentes/TabelaDados";
 import { TabelaDeNegativas, TabelaDePalavrasNovas } from "@/componentes/TabelasDeTermos";
 
@@ -37,6 +39,10 @@ export default async function PaginaPalavrasChave() {
   }
   const analise = await lerUltimaAnaliseDeTermos(contexto.conta.customerId);
   const moeda = contexto.conta.moeda || "BRL";
+  const provedoresPremiumConfigurados = [
+    ...(claudeEstaConfigurado() ? ["Claude"] : []),
+    ...(openaiEstaConfigurado() ? ["OpenAI"] : []),
+  ];
 
   return (
     <section className="flex flex-col gap-8">
@@ -95,6 +101,7 @@ export default async function PaginaPalavrasChave() {
       )}
 
       <PainelAnaliseDeTermos analiseInicial={analise} iaConfigurada={iaConfiguradaNoAmbiente()} moeda={moeda} />
+      <PainelAnalisePremium provedoresConfigurados={provedoresPremiumConfigurados} moeda={moeda} />
 
       {dados && (
         <div className="flex flex-col gap-2">

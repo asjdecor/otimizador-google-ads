@@ -9,5 +9,6 @@ prisma/*.db
 prisma/*.db-journal
 test-results/
 playwright-report/
+.playwright-mcp/
 # Credenciais OAuth do Google baixadas do Console (nunca versionar)
 client_secret*.json

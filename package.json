@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "demo": "node scripts/demo.mjs",
     "demo:ia-real": "node scripts/demo.mjs --ia-real",
-    "verificar-ia": "node --env-file=.env scripts/verificar-ia.mjs"
+    "verificar-ia": "node --env-file=.env scripts/verificar-ia.mjs",
+    "verificar-openai": "node --env-file=.env scripts/verificar-openai.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

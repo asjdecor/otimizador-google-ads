@@ -1,7 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { claudeEstaConfigurado, lerConfiguracaoClaude, MODELO_CLAUDE_PADRAO } from "@/api/configuracao/ambiente";
+import {
+  claudeEstaConfigurado,
+  lerConfiguracaoClaude,
+  lerConfiguracaoOpenAI,
+  MODELO_CLAUDE_PADRAO,
+  MODELO_OPENAI_PADRAO,
+  openaiEstaConfigurado,
+} from "@/api/configuracao/ambiente";
 import { ErroParaUsuario } from "@/api/erro-para-usuario";
 import {
   criarGeradorClaude,
@@ -97,6 +104,16 @@ describe("custo e configuração", () => {
     expect(lerConfiguracaoClaude({ ANTHROPIC_API_KEY: "k", CLAUDE_MODEL: "claude-sonnet-5-5" }).modelo).toBe("claude-sonnet-5-5");
     expect(() => lerConfiguracaoClaude({ ANTHROPIC_API_KEY: " " })).toThrow("ANTHROPIC_API_KEY");
     expect(claudeEstaConfigurado({})).toBe(false);
+  });
+
+  it("lê configuração da OpenAI sem expor chaves e rejeita chave vazia", () => {
+    expect(lerConfiguracaoOpenAI({ OPENAI_API_KEY: "k" })).toEqual({
+      apiKey: "k",
+      modelo: MODELO_OPENAI_PADRAO,
+    });
+    expect(lerConfiguracaoOpenAI({ OPENAI_API_KEY: "k", OPENAI_MODEL: "gpt-4.1" }).modelo).toBe("gpt-4.1");
+    expect(() => lerConfiguracaoOpenAI({ OPENAI_API_KEY: " " })).toThrow("OPENAI_API_KEY");
+    expect(openaiEstaConfigurado({})).toBe(false);
   });
 });
 

@@ -8,11 +8,12 @@ const REGRAS_DE_TRADUCAO: { padroes: RegExp; mensagem: string }[] = [
   {
     padroes: /DEVELOPER_TOKEN_NOT_APPROVED|only approved for use with test accounts/i,
     mensagem:
-      "Seu developer token só tem acesso de teste e só lê contas de teste. Peça o acesso Básico na Central de API da sua MCC.",
+      "O projeto do Google Cloud só tem acesso de teste à Google Ads API. Peça o acesso Básico em Google Cloud Console → Google Ads API.",
   },
   {
     padroes: /DEVELOPER_TOKEN_(INVALID|PROHIBITED|PARAMETER_MISSING)|developer token is not valid/i,
-    mensagem: "Developer token inválido. Confira GOOGLE_ADS_DEVELOPER_TOKEN no arquivo .env.",
+    mensagem:
+      "O Google recusou o acesso à Google Ads API. Apague GOOGLE_ADS_DEVELOPER_TOKEN do .env (não é mais usado) e confira se a API está ativada no projeto do Google Cloud.",
   },
   {
     padroes: /USER_PERMISSION_DENIED|doesn't have permission to access customer/i,

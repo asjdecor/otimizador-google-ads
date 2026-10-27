@@ -1,6 +1,6 @@
 # Otimizador de Anúncios Google Ads
 
-App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra onde a verba está sendo desperdiçada, dá nota de 0 a 100 a cada anúncio e gera títulos e descrições melhores com IA (Claude).
+App pessoal que se conecta à sua conta do Google Ads, mostra onde a verba está sendo desperdiçada, dá nota de 0 a 100 a cada anúncio e ajuda a revisar palavras-chave e campanhas com IA.
 
 > **Status:** em desenvolvimento. Fases 1–7 e 9 prontas (base, conexão, painel, nota e diagnóstico, sugestões com IA, palavras-chave, teste e2e, pesquisa de mercado) + login e suporte à Vercel. Veja [docs/tarefas.md](docs/tarefas.md).
 > **Segurança:** online, o app exige senha (variáveis `APP_SENHA_HASH` e `APP_SESSAO_SEGREDO`). Sem elas, ele se bloqueia sozinho.
@@ -11,8 +11,9 @@ App pessoal que se conecta à sua conta do Google Ads (somente leitura), mostra 
 - **Anúncios:** nota 0–100 por regras explicadas (limite de caracteres, palavra-chave no título, chamada para ação, títulos repetidos, quantidade de variações, força do anúncio) com "como corrigir".
 - **Sugestões com IA:** até 15 títulos e 4 descrições novos por anúncio, sempre dentro de 30/90 caracteres, com histórico e custo estimado.
 - **Palavras-chave:** termos de pesquisa, negativas sugeridas (por regra e por IA, com motivo), novas palavras-chave e exportação em CSV para o Google Ads Editor.
+- **Análise premium:** compara análises de Claude e OpenAI, consulta ideias e métricas do Planejador do Google e organiza dez perspectivas especialistas. As recomendações são consultivas; nenhuma mudança é aplicada às campanhas.
 - **Pesquisa de mercado:** descobre concorrentes, lê o que mostram ao público e recomenda palavras-chave (veja abaixo).
-- **Nada é alterado no Google Ads** — o app só lê e sugere.
+- **A análise premium não altera campanhas** — ela só lê e sugere.
 
 ## Como rodar
 
@@ -33,7 +34,7 @@ npm run demo          # funciona no PowerShell e no bash; abra http://localhost:
 
 A demonstração usa um banco separado (`prisma/demo.db`) e nunca toca nos seus dados reais. Ela nunca liga em produção nem na Vercel.
 
-**Quer ver a IA de verdade antes de ter as chaves do Google?** Coloque só a `ANTHROPIC_API_KEY` no `.env` e rode:
+**Quer ver a IA de verdade antes de ter as chaves do Google?** Coloque a `ANTHROPIC_API_KEY` no `.env` e rode:
 
 ```bash
 npm run verificar-ia      # confere a chave sem gastar créditos
@@ -48,6 +49,12 @@ Chaves necessárias no `.env`:
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google Cloud → APIs e serviços → Credenciais (OAuth, app da Web). Redirect: `http://localhost:3000/api/auth/google/callback` |
 | `GOOGLE_ADS_DEVELOPER_TOKEN` | Google Ads (conta MCC) → Ferramentas → Central de API. Peça acesso **Básico** para ler contas reais |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys (Fase 5) |
+| `OPENAI_API_KEY` | platform.openai.com → API keys (opcional; usado em paralelo com Claude na análise premium) |
+| `OPENAI_MODEL` | Modelo OpenAI para a análise premium (opcional; padrão `gpt-4.1-mini`) |
+
+Na tela **Palavras-chave**, a análise premium consulta dados do período selecionado e ideias do Planejador, depois executa em paralelo cada provedor configurado. Se um provedor falhar, o resultado disponível é mostrado com um aviso. Para comparação entre dois modelos, configure ambas as chaves. A consulta do Planejador depende do acesso da conta ao recurso do Google Ads.
+
+Para validar a chave OpenAI sem gerar texto, rode `npm run verificar-openai`. O teste consulta apenas se o modelo está acessível e não usa tokens de geração.
 
 ## Pesquisa de mercado
 
@@ -77,7 +84,8 @@ Menu **Pesquisa** (`/pesquisa`). A partir do site, das palavras e das regiões d
    | `ENCRYPTION_KEY` | **nova**, gerada com o comando da tabela acima (não reutilize a do PC) |
    | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ADS_DEVELOPER_TOKEN` | os mesmos do `.env` |
    | `GOOGLE_REDIRECT_URI` | `https://SEU-DOMINIO/api/auth/google/callback` |
-   | `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` | os mesmos do `.env` |
+   | `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` | os mesmos do `.env` (se usar Claude) |
+   | `OPENAI_API_KEY`, `OPENAI_MODEL` | os mesmos do `.env` (opcional; habilita a análise OpenAI) |
 
 5. **Google Cloud** → Credenciais → seu cliente OAuth → adicione o mesmo `https://SEU-DOMINIO/api/auth/google/callback` em *URIs de redirecionamento autorizados*.
 6. **Publicar:** *Deployments → Redeploy* (ou qualquer push na `main`). Na primeira vez, o build cria as tabelas no Neon.
@@ -102,7 +110,7 @@ Sem domínio próprio, use o endereço que a Vercel dá (`https://<projeto>.verc
 
 ## Stack
 
-Next.js 15 · React 19 · TypeScript (estrito) · Tailwind 4 · Prisma 6 (SQLite local, PostgreSQL/Neon na Vercel) · Google Ads API (`google-ads-api`) · Anthropic SDK (`claude-opus-5-5`) · Vitest.
+Next.js 15 · React 19 · TypeScript (estrito) · Tailwind 4 · Prisma 6 (SQLite local, PostgreSQL/Neon na Vercel) · Google Ads API (`google-ads-api`) · Anthropic SDK · OpenAI Responses API · Vitest.
 
 ## Como o projeto é feito
 

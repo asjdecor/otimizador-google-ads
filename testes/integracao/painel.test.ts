@@ -108,8 +108,13 @@ describe("carregarDadosDoPainel", () => {
 });
 
 describe("configuração do app", () => {
-  it("começa com os padrões (R$ 50, 30 dias)", async () => {
-    expect(await lerConfiguracaoDoApp()).toEqual({ limiteDesperdicio: 50, periodoPadrao: 30 });
+  it("começa com os padrões (R$ 50, 30 dias) e sem tetos de campanha", async () => {
+    expect(await lerConfiguracaoDoApp()).toMatchObject({
+      limiteDesperdicio: 50,
+      periodoPadrao: 30,
+      orcamentoMaximoPorCampanha: null,
+      orcamentoMaximoTotal: null,
+    });
   });
 
   it("salva o limite e recusa valores inválidos", async () => {

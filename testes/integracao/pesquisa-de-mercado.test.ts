@@ -430,7 +430,7 @@ describe("montarPontoDePartida", () => {
       tipo: "pronto",
       conta: { customerId: "111", nome: "Loja", moeda: "BRL", ehGerente: false, selecionada: true, loginCustomerId: null },
       periodo: 30,
-      configuracao: { limiteDesperdicio: 50, periodoPadrao: 30 },
+      configuracao: { limiteDesperdicio: 50, periodoPadrao: 30, orcamentoMaximoPorCampanha: null, orcamentoMaximoTotal: null },
       api,
       credenciais,
     };

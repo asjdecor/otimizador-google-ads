@@ -79,7 +79,9 @@ model PesquisaMercado {
 
 /// Configuração única do app (linha id = 1).
 model Configuracao {
-  id                Int @id @default(1)
-  limiteDesperdicio Int @default(50)
-  periodoPadrao     Int @default(30)
+  id                              Int  @id @default(1)
+  limiteDesperdicio               Int  @default(50)
+  periodoPadrao                   Int  @default(30)
+  orcamentoMaximoPorCampanhaCentavos Int?
+  orcamentoMaximoTotalCentavos      Int?
 }

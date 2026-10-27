@@ -13,6 +13,7 @@ import { Aviso } from "@/componentes/Aviso";
 import { AvisoSemConta } from "@/componentes/AvisoSemConta";
 import { CardMetrica } from "@/componentes/CardMetrica";
 import { FormularioLimite } from "@/componentes/FormularioLimite";
+import { FormularioOrcamento } from "@/componentes/FormularioOrcamento";
 import { TabelaDados } from "@/componentes/TabelaDados";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,23 @@ export default async function PaginaPainel() {
               </div>
               <FormularioLimite limiteAtual={configuracao.limiteDesperdicio} />
             </div>
+
+            <div className="flex flex-col gap-3 rounded-card border border-borda bg-superficie p-4">
+              <h2>Orçamentos máximos da campanha</h2>
+              <div className="flex flex-wrap items-end gap-3">
+                <FormularioOrcamento
+                  titulo="Máximo por campanha (R$)"
+                  valorAtual={configuracao.orcamentoMaximoPorCampanha}
+                  nomeCampo="orcamentoMaximoPorCampanha"
+                />
+                <FormularioOrcamento
+                  titulo="Máximo total (R$)"
+                  valorAtual={configuracao.orcamentoMaximoTotal}
+                  nomeCampo="orcamentoMaximoTotal"
+                />
+              </div>
+            </div>
+
             <TabelaDados
               titulo="Palavras-chave que desperdiçam verba"
               moeda={moeda}

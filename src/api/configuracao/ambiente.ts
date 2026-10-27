@@ -4,17 +4,13 @@ export interface ConfiguracaoGoogle {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  /** Opcional: o Google descontinuou o developer token em 09/09/2026 (o acesso agora é do projeto do Google Cloud). */
   developerToken: string;
 }
 
 type Ambiente = Record<string, string | undefined>;
 
-const CAMPOS_GOOGLE_OBRIGATORIOS = [
-  "GOOGLE_CLIENT_ID",
-  "GOOGLE_CLIENT_SECRET",
-  "GOOGLE_REDIRECT_URI",
-  "GOOGLE_ADS_DEVELOPER_TOKEN",
-] as const;
+const CAMPOS_GOOGLE_OBRIGATORIOS = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"] as const;
 
 export class ErroDeConfiguracao extends ErroParaUsuario {}
 
@@ -43,6 +39,12 @@ export interface ConfiguracaoClaude {
 }
 
 export const MODELO_CLAUDE_PADRAO = "claude-opus-5-5";
+export interface ConfiguracaoOpenAI {
+  apiKey: string;
+  modelo: string;
+}
+
+export const MODELO_OPENAI_PADRAO = "gpt-4.1-mini";
 
 /** Diz se a chave da Anthropic está preenchida (para a tela avisar antes de tentar gerar). */
 export function claudeEstaConfigurado(ambiente: Ambiente = process.env): boolean {
@@ -56,4 +58,16 @@ export function lerConfiguracaoClaude(ambiente: Ambiente = process.env): Configu
     throw new ErroDeConfiguracao("Preencha no arquivo .env: ANTHROPIC_API_KEY (console.anthropic.com → API Keys).");
   }
   return { apiKey, modelo: ambiente.CLAUDE_MODEL?.trim() || MODELO_CLAUDE_PADRAO };
+}
+
+export function openaiEstaConfigurado(ambiente: Ambiente = process.env): boolean {
+  return Boolean(ambiente.OPENAI_API_KEY?.trim());
+}
+
+export function lerConfiguracaoOpenAI(ambiente: Ambiente = process.env): ConfiguracaoOpenAI {
+  const apiKey = ambiente.OPENAI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new ErroDeConfiguracao("Preencha OPENAI_API_KEY no .env (platform.openai.com → API keys).");
+  }
+  return { apiKey, modelo: ambiente.OPENAI_MODEL?.trim() || MODELO_OPENAI_PADRAO };
 }

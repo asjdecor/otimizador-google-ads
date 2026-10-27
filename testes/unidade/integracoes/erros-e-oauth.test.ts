@@ -23,7 +23,7 @@ describe("traduzirErroGoogleAds", () => {
   it.each([
     [new Error("invalid_grant"), "expirou ou foi revogado"],
     [{ errors: [{ message: "The developer token is only approved for use with test accounts." }] }, "acesso de teste"],
-    [new Error("DEVELOPER_TOKEN_INVALID"), "Developer token inválido"],
+    [new Error("DEVELOPER_TOKEN_INVALID"), "Apague GOOGLE_ADS_DEVELOPER_TOKEN"],
     [{ errors: [{ message: "User doesn't have permission to access customer." }] }, "não tem permissão"],
     [new Error("CUSTOMER_NOT_ENABLED"), "desativada"],
     [new Error("RESOURCE_EXHAUSTED"), "Limite de consultas"],
