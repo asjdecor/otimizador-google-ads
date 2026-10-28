@@ -24,7 +24,10 @@ export function AcoesDaConexao() {
       setErro(resultado.erro);
       return;
     }
-    iniciarTransicao(() => router.refresh());
+    iniciarTransicao(() => {
+      router.replace("/conectar");
+      router.refresh();
+    });
   }
 
   const ocupado = pendente || acaoAtual !== null;

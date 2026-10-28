@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { traduzirErroGoogleAds } from "@/api/integracoes/google-ads/erros";
 import { criarProvedorOAuthDoAmbiente } from "@/api/integracoes/fabrica";
 import { COOKIE_ESTADO_OAUTH, gerarEstadoOAuth } from "@/api/seguranca/requisicao";
+import { lerConfiguracaoDeLogin } from "@/api/seguranca/sessao";
 
 /** Início do login: manda o usuário para o Google com um "estado" guardado em cookie. */
 export function GET(requisicao: Request) {
@@ -17,7 +18,7 @@ export function GET(requisicao: Request) {
     });
     return resposta;
   } catch (erro) {
-    const destino = new URL("/conectar", requisicao.url);
+    const destino = new URL(lerConfiguracaoDeLogin().modo === "google" ? "/login" : "/conectar", requisicao.url);
     destino.searchParams.set("erro", traduzirErroGoogleAds(erro));
     return NextResponse.redirect(destino);
   }

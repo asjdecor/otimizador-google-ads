@@ -1,8 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/api/banco/prisma";
+import { lerMccPreferida } from "@/api/configuracao/ambiente";
 import type { ApiGoogleAds } from "@/api/integracoes/google-ads/api-google-ads";
 import { listarContasAcessiveis, type ContaAcessivel } from "@/api/integracoes/google-ads/contas";
-import type { ProvedorOAuth } from "@/api/integracoes/google-ads/oauth";
+import type { ProvedorOAuth, TokensDaConexao } from "@/api/integracoes/google-ads/oauth";
 import { ErroParaUsuario } from "@/api/erro-para-usuario";
 import { criptografarTexto, descriptografarTexto } from "@/api/seguranca/criptografia";
 
@@ -78,7 +79,7 @@ export async function sincronizarContasSalvas(contas: ContaAcessivel[], banco: P
 export async function atualizarContasDoGoogle(api: ApiGoogleAds, banco: PrismaClient = prisma): Promise<void> {
   const refreshToken = await lerRefreshTokenSalvo(banco);
   if (!refreshToken) throw new ErroParaUsuario("Nenhuma conta Google conectada.");
-  await sincronizarContasSalvas(await listarContasAcessiveis(api, refreshToken), banco);
+  await sincronizarContasSalvas(await listarContasAcessiveis(api, refreshToken, lerMccPreferida()), banco);
 }
 
 /** Fluxo completo do callback: código do Google → tokens → banco → lista de contas. */
@@ -88,8 +89,19 @@ export async function concluirConexaoGoogle(
   banco: PrismaClient = prisma,
 ): Promise<void> {
   const tokens = await dependencias.provedor.trocarCodigoPorTokens(codigo);
+  await concluirConexaoGoogleComTokens(tokens, dependencias.api, banco);
+}
+
+/** Persiste tokens já validados e sincroniza contas sem trocar o código OAuth novamente. */
+export async function concluirConexaoGoogleComTokens(
+  tokens: TokensDaConexao,
+  api: ApiGoogleAds,
+  banco: PrismaClient = prisma,
+): Promise<void> {
+  // Salva antes de buscar as contas: se a busca falhar (ex.: acesso ainda de teste), dá para tentar de novo sem refazer o login.
   await salvarConexaoGoogle(tokens, banco);
-  await atualizarContasDoGoogle(dependencias.api, banco);
+  const contas = await listarContasAcessiveis(api, tokens.refreshToken, lerMccPreferida());
+  await sincronizarContasSalvas(contas, banco);
 }
 
 /** Seleciona a conta a analisar. Contas MCC não têm anúncios, então não podem ser escolhidas. */

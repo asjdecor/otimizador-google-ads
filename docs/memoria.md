@@ -14,7 +14,8 @@
   - Seleção de conta (MCC não pode ser escolhida), atualização da lista e desconexão (apaga tudo e tenta revogar no Google).
   - Cache de 15 min (`consultarComCache`, `limparCacheDaConta`) + botão **Atualizar** no topo.
   - Tela `/conectar` (avisa o que falta no `.env`, lista as contas) + SeletorConta no topo.
-  - `traduzirErroGoogleAds` (token expirado, developer token só de teste, permissão, cota…) e `ErroParaUsuario` para mensagens prontas.
+  - Google Ads usa REST/GAQL autenticado com OAuth sem cabeçalho `developer-token`; o acesso de produção depende do nível do projeto Google Cloud (Explorer ou superior).
+  - `traduzirErroGoogleAds` (OAuth expirado, nível de acesso do projeto, permissão da conta, cota…) e `ErroParaUsuario` para mensagens prontas.
   - POSTs só aceitos da mesma origem.
 - ✔ **Fase 3, Métricas e desperdício:**
   - `integracoes/google-ads/metricas.ts`: GAQL de campanhas, palavras-chave (`keyword_view`) e anúncios (`ad_group_ad`) com `segments.date BETWEEN`; mapeadores Zod que aceitam enums numéricos ou em texto; `microsParaReais` sem arredondar.

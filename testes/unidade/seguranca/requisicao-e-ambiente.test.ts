@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lerConfiguracaoGoogle, listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
+import { lerConfiguracaoGoogle, lerMccPreferida, listarCamposGoogleFaltando } from "@/api/configuracao/ambiente";
 import { estadoOAuthConfere, gerarEstadoOAuth, requisicaoEhDaMesmaOrigem } from "@/api/seguranca/requisicao";
 import { formatarIdDaConta } from "@/api/servicos/formatacao";
 
@@ -49,14 +49,28 @@ describe("configuração do Google", () => {
     expect(listarCamposGoogleFaltando(completo)).toEqual([]);
   });
 
-  it("developer token é opcional (o Google o descontinuou em 09/09/2026)", () => {
-    expect(listarCamposGoogleFaltando({ ...completo, GOOGLE_ADS_DEVELOPER_TOKEN: "" })).toEqual([]);
-    expect(lerConfiguracaoGoogle(completo).developerToken).toBe("");
-    expect(lerConfiguracaoGoogle({ ...completo, GOOGLE_ADS_DEVELOPER_TOKEN: " dev " }).developerToken).toBe("dev");
-  });
-
   it("lerConfiguracaoGoogle diz o que falta", () => {
     expect(() => lerConfiguracaoGoogle({ ...completo, GOOGLE_CLIENT_SECRET: "" })).toThrow("GOOGLE_CLIENT_SECRET");
+  });
+
+  it("ignora o developer token legado; o acesso é definido pelo projeto Google Cloud", () => {
+    expect(lerConfiguracaoGoogle(completo)).toEqual({
+      clientId: "id",
+      clientSecret: "seg",
+      redirectUri: "http://localhost:3000/cb",
+    });
+    expect(lerConfiguracaoGoogle({ ...completo, GOOGLE_ADS_DEVELOPER_TOKEN: "legacy" })).toEqual(
+      lerConfiguracaoGoogle(completo),
+    );
+  });
+});
+
+describe("lerMccPreferida", () => {
+  it("aceita o ID com ou sem traços e trata vazio como null", () => {
+    expect(lerMccPreferida({ GOOGLE_ADS_LOGIN_CUSTOMER_ID: "286-523-5552" })).toBe("2865235552");
+    expect(lerMccPreferida({ GOOGLE_ADS_LOGIN_CUSTOMER_ID: "2865235552" })).toBe("2865235552");
+    expect(lerMccPreferida({ GOOGLE_ADS_LOGIN_CUSTOMER_ID: " " })).toBeNull();
+    expect(lerMccPreferida({})).toBeNull();
   });
 });
 

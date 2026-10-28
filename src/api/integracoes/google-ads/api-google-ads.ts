@@ -1,4 +1,5 @@
-import { enums, GoogleAdsApi, services } from "google-ads-api";
+import { OAuth2Client } from "google-auth-library";
+import { googleAdsVersion } from "google-ads-api";
 import type { ConfiguracaoGoogle } from "@/api/configuracao/ambiente";
 import type { PedidoDeIdeias } from "./planejador";
 
@@ -20,54 +21,131 @@ export interface ApiGoogleAds {
   gerarIdeiasDePalavras(credenciais: CredenciaisDeConsulta, pedido: PedidoDeIdeias): Promise<unknown>;
 }
 
-export function criarApiGoogleAds(config: ConfiguracaoGoogle): ApiGoogleAds {
-  const cliente = new GoogleAdsApi({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    developer_token: config.developerToken,
-  });
+interface RespostaListaContas {
+  resourceNames?: string[];
+}
 
-  const abrirConta = (credenciais: CredenciaisDeConsulta) =>
-    cliente.Customer({
-      customer_id: credenciais.customerId,
-      refresh_token: credenciais.refreshToken,
-      ...(credenciais.loginCustomerId ? { login_customer_id: credenciais.loginCustomerId } : {}),
-    });
+interface RespostaPaginada {
+  results?: unknown[];
+  nextPageToken?: string;
+}
+
+interface DependenciasApiGoogleAds {
+  obterToken?: (refreshToken: string) => Promise<string>;
+  fazerRequisicao?: typeof fetch;
+}
+
+const URL_BASE_GOOGLE_ADS = `https://googleads.googleapis.com/${googleAdsVersion}`;
+const DURACAO_CACHE_TOKEN_MS = 50 * 60 * 1000;
+const cacheTokens = new Map<string, { token: string; expiraEm: number }>();
+
+function criarObtentorDeToken(config: ConfiguracaoGoogle): (refreshToken: string) => Promise<string> {
+  return async (refreshToken) => {
+    const salvo = cacheTokens.get(refreshToken);
+    if (salvo && salvo.expiraEm > Date.now()) return salvo.token;
+
+    const oauth = new OAuth2Client({ clientId: config.clientId, clientSecret: config.clientSecret });
+    oauth.setCredentials({ refresh_token: refreshToken });
+    const { token } = await oauth.getAccessToken();
+    if (!token) throw new Error("O Google OAuth não devolveu um access token.");
+
+    cacheTokens.set(refreshToken, { token, expiraEm: Date.now() + DURACAO_CACHE_TOKEN_MS });
+    return token;
+  };
+}
+
+function decamelizarChaves(valor: unknown): unknown {
+  if (Array.isArray(valor)) return valor.map(decamelizarChaves);
+  if (valor === null || typeof valor !== "object") return valor;
+
+  return Object.fromEntries(
+    Object.entries(valor).map(([chave, conteudo]) => [
+      chave.replace(/[A-Z]/g, (letra) => `_${letra.toLowerCase()}`),
+      decamelizarChaves(conteudo),
+    ]),
+  );
+}
+
+async function lerErroGoogle(resposta: Response): Promise<Error> {
+  const corpo = await resposta.text();
+  let detalhe: unknown = corpo;
+  try {
+    detalhe = JSON.parse(corpo);
+  } catch {
+    // Preserve the response body when the server does not return JSON.
+  }
+  return new Error(`Google Ads API (${resposta.status}): ${JSON.stringify(detalhe)}`);
+}
+
+export function criarApiGoogleAds(
+  config: ConfiguracaoGoogle,
+  dependencias: DependenciasApiGoogleAds = {},
+): ApiGoogleAds {
+  const obterToken = dependencias.obterToken ?? criarObtentorDeToken(config);
+  const fazerRequisicao = dependencias.fazerRequisicao ?? fetch;
+
+  /** POST paginado na conta; junta as páginas e devolve as linhas com chaves em snake_case. */
+  async function postarPaginado(
+    credenciais: CredenciaisDeConsulta,
+    metodo: string,
+    corpo: Record<string, unknown>,
+  ): Promise<unknown[]> {
+    const linhas: unknown[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const resposta = await fazerRequisicao(
+        `${URL_BASE_GOOGLE_ADS}/customers/${encodeURIComponent(credenciais.customerId)}${metodo}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${await obterToken(credenciais.refreshToken)}`,
+            "Content-Type": "application/json",
+            ...(credenciais.loginCustomerId ? { "login-customer-id": credenciais.loginCustomerId } : {}),
+          },
+          body: JSON.stringify({ ...corpo, ...(pageToken ? { pageToken } : {}) }),
+        },
+      );
+      if (!resposta.ok) throw await lerErroGoogle(resposta);
+
+      const dados = (await resposta.json()) as RespostaPaginada;
+      linhas.push(...(dados.results ?? []).map(decamelizarChaves));
+      pageToken = dados.nextPageToken;
+    } while (pageToken);
+
+    return linhas;
+  }
 
   return {
     async listarIdsAcessiveis(refreshToken) {
-      const resposta = await cliente.listAccessibleCustomers(refreshToken);
-      return (resposta.resource_names ?? []).map((nome) => nome.replace("customers/", ""));
+      const resposta = await fazerRequisicao(`${URL_BASE_GOOGLE_ADS}/customers:listAccessibleCustomers`, {
+        headers: { Authorization: `Bearer ${await obterToken(refreshToken)}` },
+      });
+      if (!resposta.ok) throw await lerErroGoogle(resposta);
+
+      const dados = (await resposta.json()) as RespostaListaContas;
+      return (dados.resourceNames ?? []).map((nome) => nome.replace("customers/", ""));
     },
 
     async consultar(credenciais, gaql) {
-      const linhas: unknown[] = await abrirConta(credenciais).query(gaql);
-      return linhas;
+      return postarPaginado(credenciais, "/googleAds:search", { query: gaql });
     },
 
     async gerarIdeiasDePalavras(credenciais, pedido) {
       const { urlSemente, palavrasSemente } = pedido;
       const semente =
         urlSemente && palavrasSemente.length > 0
-          ? {
-              keyword_and_url_seed: {
-                url: urlSemente,
-                keywords: palavrasSemente,
-              },
-            }
+          ? { keywordAndUrlSeed: { url: urlSemente, keywords: palavrasSemente } }
           : urlSemente
-            ? { url_seed: { url: urlSemente } }
-            : { keyword_seed: { keywords: palavrasSemente } };
-      return abrirConta(credenciais).keywordPlanIdeas.generateKeywordIdeas(
-        new services.GenerateKeywordIdeasRequest({
-          customer_id: credenciais.customerId,
-          language: `languageConstants/${pedido.idioma}`,
-          geo_target_constants: pedido.idsGeo.map((id) => `geoTargetConstants/${id}`),
-          keyword_plan_network: enums.KeywordPlanNetwork.GOOGLE_SEARCH,
-          include_adult_keywords: false,
-          ...semente,
-        }),
-      );
+            ? { urlSeed: { url: urlSemente } }
+            : { keywordSeed: { keywords: palavrasSemente } };
+      return postarPaginado(credenciais, ":generateKeywordIdeas", {
+        language: `languageConstants/${pedido.idioma}`,
+        geoTargetConstants: pedido.idsGeo.map((id) => `geoTargetConstants/${id}`),
+        keywordPlanNetwork: "GOOGLE_SEARCH",
+        includeAdultKeywords: false,
+        ...semente,
+      });
     },
   };
 }

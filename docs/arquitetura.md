@@ -50,7 +50,9 @@ Regras de arquitetura:
 | Login | Senha única (hash scrypt em `APP_SENHA_HASH`), sessão em cookie httpOnly assinado com HMAC (`APP_SESSAO_SEGREDO` + hash da senha), `src/middleware.ts` protege tudo | Na Vercel/produção, sem senha o app bloqueia tudo (503). No PC, sem senha o login fica desligado. |
 
 Variáveis de ambiente (`.env`, nunca commitado; `.env.example` versionado):
-`DATABASE_URL`, `ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_LOGIN_CUSTOMER_ID` (opcional, MCC), `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
+`DATABASE_URL`, `ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `GOOGLE_ADS_LOGIN_CUSTOMER_ID` (opcional, MCC), `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`.
+
+O acesso à Google Ads API é controlado pelo nível de acesso do projeto Google Cloud. O app usa OAuth e REST/GAQL sem enviar o cabeçalho legado `developer-token`.
 
 ### Modelo de dados (Prisma)
 - `ConexaoGoogle`: id, email, refreshTokenCriptografado, criadoEm

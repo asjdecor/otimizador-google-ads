@@ -4,8 +4,6 @@ export interface ConfiguracaoGoogle {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
-  /** Opcional: o Google descontinuou o developer token em 09/09/2026 (o acesso agora é do projeto do Google Cloud). */
-  developerToken: string;
 }
 
 type Ambiente = Record<string, string | undefined>;
@@ -29,8 +27,13 @@ export function lerConfiguracaoGoogle(ambiente: Ambiente = process.env): Configu
     clientId: (ambiente.GOOGLE_CLIENT_ID ?? "").trim(),
     clientSecret: (ambiente.GOOGLE_CLIENT_SECRET ?? "").trim(),
     redirectUri: (ambiente.GOOGLE_REDIRECT_URI ?? "").trim(),
-    developerToken: (ambiente.GOOGLE_ADS_DEVELOPER_TOKEN ?? "").trim(),
   };
+}
+
+/** MCC preferida como login-customer-id (GOOGLE_ADS_LOGIN_CUSTOMER_ID, traços aceitos); null se vazia. */
+export function lerMccPreferida(ambiente: Ambiente = process.env): string | null {
+  const id = (ambiente.GOOGLE_ADS_LOGIN_CUSTOMER_ID ?? "").replace(/\D/g, "");
+  return id || null;
 }
 
 export interface ConfiguracaoClaude {
